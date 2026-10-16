@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/components/google_sign_in_button.dart';
 import '../controllers/auth_controller.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -24,6 +25,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _obscureConfirmPassword = true;
   bool _acceptTerms = true;
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
   String? _errorMessage;
 
   @override
@@ -77,6 +79,41 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       setState(() {
         _errorMessage = result.error;
       });
+    }
+  }
+
+  Future<void> _handleGoogleSignUp() async {
+    setState(() {
+      _isGoogleLoading = true;
+      _errorMessage = null;
+    });
+
+    final notifier = ref.read(authControllerProvider.notifier);
+    final result = await notifier.signInWithGoogle();
+
+    if (!mounted) return;
+
+    setState(() => _isGoogleLoading = false);
+
+    if (result.success) {
+      final name = result.user?.displayName ?? 'প্রার্থী';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'অভিনন্দন $name! গুগল অ্যাকাউন্টে সফলভাবে সাইন-আপ সম্পন্ন হয়েছে।',
+            style: GoogleFonts.hindSiliguri(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      context.go('/');
+    } else {
+      if (result.error != null && !result.error!.contains('বাতিল')) {
+        setState(() {
+          _errorMessage = result.error;
+        });
+      }
     }
   }
 
@@ -515,9 +552,48 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             ),
                     ),
                   ),
+                  const SizedBox(height: 24),
+
+                  // 9. "অথবা" Divider
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Divider(
+                          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'অথবা',
+                          style: GoogleFonts.hindSiliguri(
+                            fontSize: 13,
+                            color: isDark
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Divider(
+                          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // 10. Google Sign-Up Button
+                  GoogleSignInButton(
+                    isSignUp: true,
+                    isLoading: _isGoogleLoading,
+                    onPressed: (_isLoading || _isGoogleLoading)
+                        ? null
+                        : _handleGoogleSignUp,
+                  ),
                   const SizedBox(height: 28),
 
-                  // 9. Login Redirect
+                  // 11. Login Redirect
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/components/google_sign_in_button.dart';
 import '../controllers/auth_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -21,6 +22,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _obscurePassword = true;
   bool _isLoading = false;
   bool _isGuestLoading = false;
+  bool _isGoogleLoading = false;
   String? _errorMessage;
 
   @override
@@ -104,6 +106,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       setState(() {
         _errorMessage = result.error;
       });
+    }
+  }
+
+  Future<void> _handleGoogleLogin() async {
+    setState(() {
+      _isGoogleLoading = true;
+      _errorMessage = null;
+    });
+
+    final notifier = ref.read(authControllerProvider.notifier);
+    final result = await notifier.signInWithGoogle();
+
+    if (!mounted) return;
+
+    setState(() => _isGoogleLoading = false);
+
+    if (result.success) {
+      final name = result.user?.displayName ?? 'প্রার্থী';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'স্বাগতম $name! গুগল অ্যাকাউন্টে সফলভাবে প্রবেশ করেছেন।',
+            style: GoogleFonts.hindSiliguri(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/');
+      }
+    } else {
+      if (result.error != null && !result.error!.contains('বাতিল')) {
+        setState(() {
+          _errorMessage = result.error;
+        });
+      }
     }
   }
 
@@ -597,7 +638,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // 7. Guest Login Option
+                  // 7. Google Sign-In Button
+                  GoogleSignInButton(
+                    isLoading: _isGoogleLoading,
+                    onPressed: (_isLoading || _isGuestLoading || _isGoogleLoading)
+                        ? null
+                        : _handleGoogleLogin,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // 8. Guest Login Option
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -624,7 +674,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    onPressed: (_isLoading || _isGuestLoading)
+                    onPressed: (_isLoading || _isGuestLoading || _isGoogleLoading)
                         ? null
                         : _handleGuestLogin,
                   ),

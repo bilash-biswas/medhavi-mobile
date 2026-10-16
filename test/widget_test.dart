@@ -1,4 +1,7 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:medhavi_mobile/core/components/google_sign_in_button.dart';
 import 'package:medhavi_mobile/core/utils/bengali_numeral_converter.dart';
 import 'package:medhavi_mobile/core/localization/app_strings.dart';
 import 'package:medhavi_mobile/features/auth/presentation/controllers/auth_controller.dart';
@@ -89,6 +92,10 @@ void main() {
       expect(AppStrings.get('en', 'nav_analytics'), 'Analytics');
       expect(AppStrings.get('bn', 'nav_live_quiz'), 'লাইভ কুইজ');
       expect(AppStrings.get('en', 'nav_live_quiz'), 'Live Quiz');
+      expect(AppStrings.get('bn', 'continue_with_google'), 'Google দিয়ে চালিয়ে যান');
+      expect(AppStrings.get('en', 'continue_with_google'), 'Continue with Google');
+      expect(AppStrings.get('bn', 'sign_up_google'), 'Google দিয়ে সাইন-আপ করুন');
+      expect(AppStrings.get('en', 'sign_up_google'), 'Sign up with Google');
     });
   });
 
@@ -132,6 +139,48 @@ void main() {
       expect(state.unattemptedCount, 0);
       // 1 correct (+1) - 1 wrong (-0.50) = 0.50 marks
       expect(state.totalScore, 0.50);
+    });
+  });
+
+  group('GoogleSignInButton Widget Tests', () {
+    testWidgets('renders button with localized text and triggers callback',
+        (tester) async {
+      bool tapped = false;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GoogleSignInButton(
+                onPressed: () => tapped = true,
+                customText: 'Google দিয়ে চালিয়ে যান',
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Google দিয়ে চালিয়ে যান'), findsOneWidget);
+      await tester.tap(find.byType(GoogleSignInButton));
+      expect(tapped, isTrue);
+    });
+
+    testWidgets('displays CircularProgressIndicator when isLoading is true',
+        (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GoogleSignInButton(
+                onPressed: () {},
+                isLoading: true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
   });
 }

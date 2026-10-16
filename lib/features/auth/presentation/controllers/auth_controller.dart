@@ -1,8 +1,16 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
   return FirebaseAuth.instance;
+});
+
+final googleSignInProvider = Provider<GoogleSignIn>((ref) {
+  return GoogleSignIn(
+    scopes: ['email'],
+  );
 });
 
 final authStateProvider = StreamProvider<User?>((ref) {
@@ -116,9 +124,71 @@ class AuthController extends Notifier<AsyncValue<User?>> {
     }
   }
 
+  /// Sign In or Sign Up with Google
+  Future<AuthResult> signInWithGoogle() async {
+    try {
+      final auth = ref.read(firebaseAuthProvider);
+      UserCredential userCredential;
+
+      if (kIsWeb) {
+        final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+        googleProvider.addScope('email');
+        googleProvider.addScope('profile');
+        userCredential = await auth.signInWithPopup(googleProvider);
+      } else {
+        final googleSignIn = ref.read(googleSignInProvider);
+        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+        if (googleUser == null) {
+          return const AuthResult(
+            success: false,
+            error: 'গুগল সাইন-ইন বাতিল করা হয়েছে।',
+          );
+        }
+
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+        final OAuthCredential credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        final currentUser = auth.currentUser;
+        if (currentUser != null && currentUser.isAnonymous) {
+          try {
+            userCredential = await currentUser.linkWithCredential(credential);
+          } on FirebaseAuthException catch (e) {
+            if (e.code == 'credential-already-in-use') {
+              userCredential = await auth.signInWithCredential(credential);
+            } else {
+              rethrow;
+            }
+          }
+        } else {
+          userCredential = await auth.signInWithCredential(credential);
+        }
+      }
+
+      state = AsyncValue.data(userCredential.user);
+      return AuthResult(success: true, user: userCredential.user);
+    } on FirebaseAuthException catch (e) {
+      return AuthResult(success: false, error: _mapFirebaseError(e));
+    } catch (e) {
+      return AuthResult(
+        success: false,
+        error: 'গুগল অ্যাকাউন্টে সাইন-ইন করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।',
+      );
+    }
+  }
+
   /// Sign Out
   Future<void> signOut() async {
     final auth = ref.read(firebaseAuthProvider);
+    try {
+      if (!kIsWeb) {
+        final googleSignIn = ref.read(googleSignInProvider);
+        await googleSignIn.signOut();
+      }
+    } catch (_) {}
     await auth.signOut();
     state = const AsyncValue.data(null);
   }
@@ -139,6 +209,12 @@ class AuthController extends Notifier<AsyncValue<User?>> {
         return 'ইমেইল বা পাসওয়ার্ড সঠিক নয়। দয়া করে আবার চেষ্টা করুন।';
       case 'email-already-in-use':
         return 'এই ইমেইল ঠিকানাটি দিয়ে ইতিমধ্যে একটি অ্যাকাউন্ট রয়েছে। লগইন করুন।';
+      case 'account-exists-with-different-credential':
+        return 'এই ইমেইলটি দিয়ে অন্য মাধ্যমে অ্যাকাউন্ট খোলা হয়েছে। অনুগ্রহ করে সেই মাধ্যমে সাইন-ইন করুন।';
+      case 'credential-already-in-use':
+        return 'এই গুগল অ্যাকাউন্টটি ইতিমধ্যে অন্য একটি প্রোফাইলে ব্যবহৃত হচ্ছে।';
+      case 'popup-closed-by-user':
+        return 'পপ-আপ বন্ধ করা হয়েছে। আবার চেষ্টা করুন।';
       case 'weak-password':
         return 'পাসওয়ার্ডটি দুর্বল। কমপক্ষে ৬টি অক্ষরের শক্তিশালী পাসওয়ার্ড দিন।';
       case 'network-request-failed':
