@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../features/shell/presentation/screens/app_shell_scaffold.dart';
-import '../../features/home/presentation/screens/home_dashboard_screen.dart';
-import '../../features/question_bank/presentation/screens/question_bank_screen.dart';
-import '../../features/practice/presentation/screens/practice_hub_screen.dart';
-import '../../features/mistakes/presentation/screens/mistake_bank_screen.dart';
-import '../../features/bookmarks/presentation/screens/bookmarks_screen.dart';
+import 'package:medhavi_mobile/features/splash/presentation/screens/splash_screen.dart';
+import 'package:medhavi_mobile/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:medhavi_mobile/features/shell/presentation/screens/app_shell_scaffold.dart';
+import 'package:medhavi_mobile/features/home/presentation/screens/home_dashboard_screen.dart';
+import 'package:medhavi_mobile/features/question_bank/presentation/screens/question_bank_screen.dart';
+import 'package:medhavi_mobile/features/practice/presentation/screens/practice_hub_screen.dart';
+import 'package:medhavi_mobile/features/mistakes/presentation/screens/mistake_bank_screen.dart';
+import 'package:medhavi_mobile/features/bookmarks/presentation/screens/bookmarks_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -14,9 +16,24 @@ final GlobalKey<NavigatorState> _rootNavigatorKey =
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/',
+    initialLocation: '/splash',
     debugLogDiagnostics: false,
     routes: [
+      // 1. Splash Screen (Root Navigator, no bottom nav bar)
+      GoRoute(
+        path: '/splash',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const SplashScreen(),
+      ),
+
+      // 2. Onboarding Screen (Root Navigator, no bottom nav bar)
+      GoRoute(
+        path: '/onboarding',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+
+      // 3. Main Application Shell (With persistent bottom nav bar)
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return AppShellScaffold(navigationShell: navigationShell);

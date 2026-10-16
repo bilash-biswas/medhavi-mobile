@@ -1,11 +1,11 @@
 {
-    "name": "medhavi_mobile",
-    "short_name": "medhavi_mobile",
+    "name": "মেধাবী (Medhavi) - বিসিএস ও ক্যারিয়ার প্রস্তুতি",
+    "short_name": "মেধাবী",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0B0F19",
+    "theme_color": "#4F46E5",
+    "description": "১০ম থেকে ৪৬তম বিসিএস প্রিলিমিনারি প্রশ্ন ব্যাংক ও স্মার্ট অনুশীলন অ্যাপ্লিকেশন।",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
