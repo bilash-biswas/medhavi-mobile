@@ -8,6 +8,7 @@ import 'package:medhavi_mobile/core/localization/app_strings.dart';
 import 'package:medhavi_mobile/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:medhavi_mobile/features/live_quiz/presentation/controllers/live_quiz_controller.dart';
 import 'package:medhavi_mobile/features/question_bank/domain/entities/question_entity.dart';
+import 'package:medhavi_mobile/features/practice/presentation/controllers/practice_session_controller.dart';
 
 void main() {
   group('BengaliNumeralConverter Tests', () {
@@ -249,6 +250,64 @@ void main() {
 
       container.read(scrollVisibilityProvider.notifier).show();
       expect(container.read(scrollVisibilityProvider), isTrue);
+    });
+  });
+
+  group('PracticeSessionState Tests', () {
+    test('calculates correct, incorrect, and net score with -0.50 negative marking', () {
+      const q1 = QuestionEntity(
+        id: 'pq1',
+        examId: 'exam_bcs',
+        subjectId: 'sub_bcs_bangla',
+        question: 'চর্্যাপদ কে আবিষ্কার করেন?',
+        options: [
+          QuestionOption(id: 'opt_1', text: 'হরপ্রসাদ শাস্ত্রী'),
+          QuestionOption(id: 'opt_2', text: 'সুনীতিকুমার চট্টোপাধ্যায়'),
+        ],
+        correctOptionId: 'opt_1',
+        explanation: 'হরপ্রসাদ শাস্ত্রী ১৯০৭ সালে নেপালের রাজদরবারের রয়েল লাইব্রেরি থেকে চর্যাপদ আবিষ্কার করেন।',
+      );
+
+      const q2 = QuestionEntity(
+        id: 'pq2',
+        examId: 'exam_bcs',
+        subjectId: 'sub_bcs_bangla',
+        question: 'বাংলা সাহিত্যের আদি নিদর্শন কোনটি?',
+        options: [
+          QuestionOption(id: 'opt_a', text: 'চর্যাপদ'),
+          QuestionOption(id: 'opt_b', text: 'শ্রীকৃষ্ণকীর্তন'),
+        ],
+        correctOptionId: 'opt_a',
+        explanation: 'চর্যাপদ বাংলা ভাষার প্রাচীনতম কাব্য তথা গান সংকলন।',
+      );
+
+      const q3 = QuestionEntity(
+        id: 'pq3',
+        examId: 'exam_bcs',
+        subjectId: 'sub_bcs_bangla',
+        question: 'চর্যাপদের পদকর্তা কতজন?',
+        options: [
+          QuestionOption(id: 'opt_x', text: '২৪ জন'),
+          QuestionOption(id: 'opt_y', text: '২৩ জন'),
+        ],
+        correctOptionId: 'opt_y',
+        explanation: 'চর্যাপদের মোট পদকর্তা ২৪ জন মতান্তরে ২৩ জন।',
+      );
+
+      // User answered pq1 correctly, pq2 wrongly, and left pq3 unattempted
+      const session = PracticeSessionState(
+        title: 'বাংলা অনুশীলন',
+        questions: [q1, q2, q3],
+        selectedAnswers: {'pq1': 'opt_1', 'pq2': 'opt_b'},
+        mode: PracticeMode.exam,
+      );
+
+      expect(session.correctCount, 1);
+      expect(session.incorrectCount, 1);
+      expect(session.unattemptedCount, 1);
+      // 1 correct (+1.0) - 1 wrong (-0.5) = 0.50 marks
+      expect(session.totalScore, 0.50);
+      expect(session.accuracyPercentage, 50);
     });
   });
 }

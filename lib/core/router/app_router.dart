@@ -17,6 +17,7 @@ import 'package:medhavi_mobile/features/shell/presentation/screens/app_shell_sca
 import 'package:medhavi_mobile/features/home/presentation/screens/home_dashboard_screen.dart';
 import 'package:medhavi_mobile/features/question_bank/presentation/screens/question_bank_screen.dart';
 import 'package:medhavi_mobile/features/practice/presentation/screens/practice_hub_screen.dart';
+import 'package:medhavi_mobile/features/practice/presentation/screens/practice_session_screen.dart';
 import 'package:medhavi_mobile/features/mistakes/presentation/screens/mistake_bank_screen.dart';
 import 'package:medhavi_mobile/features/bookmarks/presentation/screens/bookmarks_screen.dart';
 
@@ -150,7 +151,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SettingsScreen(),
       ),
 
-      // 11. Main Application Shell (With persistent bottom nav bar)
+      // 11. Practice Session Runner Screen
+      GoRoute(
+        path: '/practice/session',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const PracticeSessionScreen(),
+      ),
+
+      // 12. Main Application Shell (With persistent bottom nav bar)
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return AppShellScaffold(navigationShell: navigationShell);

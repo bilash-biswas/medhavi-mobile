@@ -59,4 +59,11 @@ class BengaliNumeralConverter {
 
     return '$bnNum$suffix বিসিএস';
   }
+
+  /// Convenience alias for toBengaliNumber
+  static String toBengali(dynamic number, {bool useGrouping = true}) =>
+      toBengaliNumber(number, useGrouping: useGrouping);
+
+  /// Convenience alias for toBengaliBcsTitle
+  static String formatBcsSource(String batchStr) => toBengaliBcsTitle(batchStr);
 }
