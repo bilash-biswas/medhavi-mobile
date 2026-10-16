@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medhavi_mobile/core/components/google_sign_in_button.dart';
+import 'package:medhavi_mobile/core/controllers/scroll_visibility_controller.dart';
 import 'package:medhavi_mobile/core/utils/bengali_numeral_converter.dart';
 import 'package:medhavi_mobile/core/localization/app_strings.dart';
 import 'package:medhavi_mobile/features/auth/presentation/controllers/auth_controller.dart';
@@ -233,6 +234,21 @@ void main() {
       expect(checkRedirect(isLoggedIn: true, location: '/question-bank'), isNull);
       expect(checkRedirect(isLoggedIn: true, location: '/login'), '/');
       expect(checkRedirect(isLoggedIn: true, location: '/register'), '/');
+    });
+  });
+
+  group('ScrollVisibilityController Tests', () {
+    test('defaults to visible (true) and toggles state correctly', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      expect(container.read(scrollVisibilityProvider), isTrue);
+
+      container.read(scrollVisibilityProvider.notifier).hide();
+      expect(container.read(scrollVisibilityProvider), isFalse);
+
+      container.read(scrollVisibilityProvider.notifier).show();
+      expect(container.read(scrollVisibilityProvider), isTrue);
     });
   });
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:medhavi_mobile/core/constants/app_colors.dart';
+import 'package:medhavi_mobile/core/components/auto_hide_app_bar.dart';
 import 'package:medhavi_mobile/features/question_bank/presentation/controllers/question_bank_controller.dart';
 import 'package:medhavi_mobile/features/bookmarks/presentation/controllers/bookmarks_controller.dart';
 import 'package:medhavi_mobile/features/mistakes/presentation/controllers/mistakes_controller.dart';
@@ -18,37 +19,39 @@ class PracticeHubScreen extends ConsumerWidget {
     final mbState = ref.watch(mistakesControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: AppColors.emerald.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
+      appBar: AutoHideAppBar(
+        child: AppBar(
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: AppColors.emerald.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(LucideIcons.playCircle,
+                    color: AppColors.emerald, size: 20),
               ),
-              child: const Icon(LucideIcons.playCircle,
-                  color: AppColors.emerald, size: 20),
-            ),
-            const SizedBox(width: 10),
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'অনুশীলন হাব (Practice Hub)',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  'বিষয়ভিত্তিক কুইজ ও প্রস্তুতি',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondaryLight,
-                    fontWeight: FontWeight.normal,
+              const SizedBox(width: 10),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'অনুশীলন হাব (Practice Hub)',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  Text(
+                    'বিষয়ভিত্তিক কুইজ ও প্রস্তুতি',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondaryLight,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
       body: SingleChildScrollView(

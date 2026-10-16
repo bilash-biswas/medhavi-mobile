@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/components/auto_hide_app_bar.dart';
 import '../../../../core/utils/bengali_numeral_converter.dart';
 import '../../../../core/components/study_question_card.dart';
 import '../controllers/mistakes_controller.dart';
@@ -31,37 +32,39 @@ class _MistakeBankScreenState extends ConsumerState<MistakeBankScreen> {
     final filteredList = state.filteredQuestions;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: AppColors.rose.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
+      appBar: AutoHideAppBar(
+        child: AppBar(
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: AppColors.rose.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(LucideIcons.alertTriangle,
+                    color: AppColors.rose, size: 20),
               ),
-              child: const Icon(LucideIcons.alertTriangle,
-                  color: AppColors.rose, size: 20),
-            ),
-            const SizedBox(width: 10),
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'ভুল ব্যাংক (Mistake Bank)',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  'ভুল হওয়া প্রশ্নসমূহ সংশোধন করুন',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondaryLight,
-                    fontWeight: FontWeight.normal,
+              const SizedBox(width: 10),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'ভুল ব্যাংক (Mistake Bank)',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  Text(
+                    'ভুল হওয়া প্রশ্নসমূহ সংশোধন করুন',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondaryLight,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
       body: Column(

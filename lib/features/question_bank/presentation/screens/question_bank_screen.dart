@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/components/auto_hide_app_bar.dart';
 import '../../../../core/utils/bengali_numeral_converter.dart';
 import '../../../../core/components/study_question_card.dart';
 import '../controllers/question_bank_controller.dart';
@@ -187,37 +188,39 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
+      appBar: AutoHideAppBar(
+        child: AppBar(
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(LucideIcons.bookOpen,
+                    color: AppColors.primary, size: 20),
               ),
-              child: const Icon(LucideIcons.bookOpen,
-                  color: AppColors.primary, size: 20),
-            ),
-            const SizedBox(width: 10),
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'প্রশ্ন ব্যাংক (Question Bank)',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  '১০ম থেকে ৫০তম বিসিএস প্রিলিমিনারি প্রশ্ন ও ব্যাখ্যা',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondaryLight,
-                    fontWeight: FontWeight.normal,
+              const SizedBox(width: 10),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'প্রশ্ন ব্যাংক (Question Bank)',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  Text(
+                    '১০ম থেকে ৫০তম বিসিএস প্রিলিমিনারি প্রশ্ন ও ব্যাখ্যা',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondaryLight,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
       body: Column(

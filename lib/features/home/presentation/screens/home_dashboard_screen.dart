@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:medhavi_mobile/core/constants/app_colors.dart';
+import 'package:medhavi_mobile/core/components/auto_hide_app_bar.dart';
 import 'package:medhavi_mobile/core/theme/theme_controller.dart';
 import 'package:medhavi_mobile/core/localization/locale_controller.dart';
 import 'package:medhavi_mobile/features/auth/presentation/controllers/auth_controller.dart';
@@ -24,105 +25,107 @@ class HomeDashboardScreen extends ConsumerWidget {
     final mbState = ref.watch(mistakesControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.primary, AppColors.secondary],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+      appBar: AutoHideAppBar(
+        child: AppBar(
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primary, AppColors.secondary],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                borderRadius: BorderRadius.circular(10),
+                child: const Icon(LucideIcons.graduationCap,
+                    color: Colors.white, size: 22),
               ),
-              child: const Icon(LucideIcons.graduationCap,
-                  color: Colors.white, size: 22),
+              const SizedBox(width: 10),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'মেধাবী (Medhavi)',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  Text(
+                    'স্মার্ট বিসিএস ও ক্যারিয়ার প্রস্তুতি',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondaryLight,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            // Theme Toggle Icon
+            IconButton(
+              tooltip: 'থিম পরিবর্তন',
+              icon: Icon(
+                isDark ? LucideIcons.sun : LucideIcons.moon,
+                size: 20,
+              ),
+              onPressed: () {
+                ref.read(themeModeControllerProvider.notifier).toggleTheme();
+              },
             ),
-            const SizedBox(width: 10),
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'মেধাবী (Medhavi)',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: -0.2,
+
+            // Language Toggle Button
+            IconButton(
+              tooltip: 'ভাষা পরিবর্তন (Language)',
+              icon: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: isDark ? Colors.white30 : Colors.black26,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  locale.languageCode == 'bn' ? 'EN' : 'বাং',
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                ),
+              ),
+              onPressed: () {
+                ref.read(localeControllerProvider.notifier).toggleLocale();
+              },
+            ),
+
+            // Profile / Account
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: IconButton(
+                tooltip: 'প্রোফাইল',
+                icon: CircleAvatar(
+                  radius: 14,
+                  backgroundColor: AppColors.primary,
+                  child: Text(
+                    (currentUser != null &&
+                            currentUser.displayName?.isNotEmpty == true
+                        ? currentUser.displayName![0]
+                        : 'M')
+                    .toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
-                Text(
-                  'স্মার্ট বিসিএস ও ক্যারিয়ার প্রস্তুতি',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondaryLight,
-                    fontWeight: FontWeight.normal,
-                  ),
-                ),
-              ],
+                onPressed: () => context.push('/profile'),
+              ),
             ),
           ],
         ),
-        actions: [
-          // Theme Toggle Icon
-          IconButton(
-            tooltip: 'থিম পরিবর্তন',
-            icon: Icon(
-              isDark ? LucideIcons.sun : LucideIcons.moon,
-              size: 20,
-            ),
-            onPressed: () {
-              ref.read(themeModeControllerProvider.notifier).toggleTheme();
-            },
-          ),
-
-          // Language Toggle Button
-          IconButton(
-            tooltip: 'ভাষা পরিবর্তন (Language)',
-            icon: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: isDark ? Colors.white30 : Colors.black26,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                locale.languageCode == 'bn' ? 'EN' : 'বাং',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-              ),
-            ),
-            onPressed: () {
-              ref.read(localeControllerProvider.notifier).toggleLocale();
-            },
-          ),
-
-          // Profile / Account
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: IconButton(
-              tooltip: 'প্রোফাইল',
-              icon: CircleAvatar(
-                radius: 14,
-                backgroundColor: AppColors.primary,
-                child: Text(
-                  (currentUser != null &&
-                          currentUser.displayName?.isNotEmpty == true
-                      ? currentUser.displayName![0]
-                      : 'M')
-                  .toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              onPressed: () => context.push('/profile'),
-            ),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
