@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medhavi_mobile/core/utils/bengali_numeral_converter.dart';
+import 'package:medhavi_mobile/core/localization/app_strings.dart';
 import 'package:medhavi_mobile/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:medhavi_mobile/features/live_quiz/presentation/controllers/live_quiz_controller.dart';
 import 'package:medhavi_mobile/features/question_bank/domain/entities/question_entity.dart';
 
 void main() {
@@ -74,6 +76,62 @@ void main() {
       );
       expect(errorResult.success, isFalse);
       expect(errorResult.error, 'ইমেইল বা পাসওয়ার্ড সঠিক নয়।');
+    });
+  });
+
+  group('AppStrings Localization Tests', () {
+    test('correctly looks up Bengali and English strings', () {
+      expect(AppStrings.get('bn', 'app_name'), 'মেধাবী');
+      expect(AppStrings.get('en', 'app_name'), 'Medhavi');
+      expect(AppStrings.get('bn', 'nav_leaderboard'), 'লিডারবোর্ড');
+      expect(AppStrings.get('en', 'nav_leaderboard'), 'Leaderboard');
+      expect(AppStrings.get('bn', 'nav_analytics'), 'অ্যানালিটিক্স');
+      expect(AppStrings.get('en', 'nav_analytics'), 'Analytics');
+      expect(AppStrings.get('bn', 'nav_live_quiz'), 'লাইভ কুইজ');
+      expect(AppStrings.get('en', 'nav_live_quiz'), 'Live Quiz');
+    });
+  });
+
+  group('LiveQuiz Scoring Tests', () {
+    test('calculates score with -0.50 negative marking', () {
+      const q1 = QuestionEntity(
+        id: 'q1',
+        examId: 'exam_bcs',
+        subjectId: 'sub_bcs_bangla',
+        question: 'প্রশ্ন ১',
+        options: [
+          QuestionOption(id: 'a', text: 'অপশন ক'),
+          QuestionOption(id: 'b', text: 'অপশন খ'),
+        ],
+        correctOptionId: 'a',
+        explanation: 'ব্যাখ্যা',
+      );
+      const q2 = QuestionEntity(
+        id: 'q2',
+        examId: 'exam_bcs',
+        subjectId: 'sub_bcs_bangla',
+        question: 'প্রশ্ন ২',
+        options: [
+          QuestionOption(id: 'a', text: 'অপশন ক'),
+          QuestionOption(id: 'b', text: 'অপশন খ'),
+        ],
+        correctOptionId: 'a',
+        explanation: 'ব্যাখ্যা',
+      );
+
+      // User answered q1 correctly ('a') and q2 wrongly ('b')
+      const state = LiveQuizState(
+        questions: [q1, q2],
+        selectedAnswers: {'q1': 'a', 'q2': 'b'},
+        timeRemainingSeconds: 200,
+        totalTimeSeconds: 300,
+      );
+
+      expect(state.correctCount, 1);
+      expect(state.incorrectCount, 1);
+      expect(state.unattemptedCount, 0);
+      // 1 correct (+1) - 1 wrong (-0.50) = 0.50 marks
+      expect(state.totalScore, 0.50);
     });
   });
 }

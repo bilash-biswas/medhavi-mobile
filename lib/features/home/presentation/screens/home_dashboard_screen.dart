@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:medhavi_mobile/core/constants/app_colors.dart';
+import 'package:medhavi_mobile/core/theme/theme_controller.dart';
+import 'package:medhavi_mobile/core/localization/locale_controller.dart';
 import 'package:medhavi_mobile/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:medhavi_mobile/features/question_bank/presentation/controllers/question_bank_controller.dart';
 import 'package:medhavi_mobile/features/bookmarks/presentation/controllers/bookmarks_controller.dart';
@@ -12,125 +14,11 @@ import 'package:medhavi_mobile/features/mistakes/presentation/controllers/mistak
 class HomeDashboardScreen extends ConsumerWidget {
   const HomeDashboardScreen({super.key});
 
-  void _showUserAccountSheet(BuildContext context, WidgetRef ref, dynamic user) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: isDark ? AppColors.cardDark : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        final displayName = (user.displayName != null && user.displayName!.isNotEmpty)
-            ? user.displayName!
-            : 'মেধাবী শিক্ষার্থী';
-        final initial = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'M';
-
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                CircleAvatar(
-                  radius: 32,
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                  child: Text(
-                    initial,
-                    style: GoogleFonts.hindSiliguri(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  displayName,
-                  style: GoogleFonts.hindSiliguri(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  user.email ?? '',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(LucideIcons.shieldCheck, size: 14, color: AppColors.success),
-                      const SizedBox(width: 6),
-                      Text(
-                        'যাচাইকৃত অ্যাকাউন্ট',
-                        style: GoogleFonts.hindSiliguri(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.success,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(LucideIcons.logOut, color: AppColors.error),
-                  title: Text(
-                    'লগআউট করুন',
-                    style: GoogleFonts.hindSiliguri(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.error,
-                    ),
-                  ),
-                  onTap: () async {
-                    Navigator.pop(ctx);
-                    await ref.read(authControllerProvider.notifier).signOut();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'সফলভাবে লগআউট হয়েছেন',
-                            style: GoogleFonts.hindSiliguri(),
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentUser = ref.watch(currentUserProvider);
+    final locale = ref.watch(localeControllerProvider);
     final qbState = ref.watch(questionBankControllerProvider);
     final bmState = ref.watch(bookmarksControllerProvider);
     final mbState = ref.watch(mistakesControllerProvider);
@@ -177,54 +65,63 @@ class HomeDashboardScreen extends ConsumerWidget {
           ],
         ),
         actions: [
-          if (currentUser != null && !currentUser.isAnonymous)
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: IconButton(
-                tooltip: 'প্রোফাইল ও অ্যাকাউন্ট',
-                icon: CircleAvatar(
-                  radius: 16,
-                  backgroundColor: AppColors.primary,
-                  child: Text(
-                    (currentUser.displayName?.isNotEmpty == true
-                            ? currentUser.displayName![0]
-                            : (currentUser.email?.isNotEmpty == true
-                                ? currentUser.email![0]
-                                : 'M'))
-                        .toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
+          // Theme Toggle Icon
+          IconButton(
+            tooltip: 'থিম পরিবর্তন',
+            icon: Icon(
+              isDark ? LucideIcons.sun : LucideIcons.moon,
+              size: 20,
+            ),
+            onPressed: () {
+              ref.read(themeModeControllerProvider.notifier).toggleTheme();
+            },
+          ),
+
+          // Language Toggle Button
+          IconButton(
+            tooltip: 'ভাষা পরিবর্তন (Language)',
+            icon: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: isDark ? Colors.white30 : Colors.black26,
                 ),
-                onPressed: () => _showUserAccountSheet(context, ref, currentUser),
+                borderRadius: BorderRadius.circular(8),
               ),
-            )
-          else
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: TextButton.icon(
-                style: TextButton.styleFrom(
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.12),
-                  foregroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                onPressed: () => context.push('/login'),
-                icon: const Icon(LucideIcons.logIn, size: 16),
-                label: Text(
-                  'লগইন',
-                  style: GoogleFonts.hindSiliguri(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
+              child: Text(
+                locale.languageCode == 'bn' ? 'EN' : 'বাং',
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
               ),
             ),
+            onPressed: () {
+              ref.read(localeControllerProvider.notifier).toggleLocale();
+            },
+          ),
+
+          // Profile / Account
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: IconButton(
+              tooltip: 'প্রোফাইল',
+              icon: CircleAvatar(
+                radius: 14,
+                backgroundColor: AppColors.primary,
+                child: Text(
+                  (currentUser != null &&
+                          currentUser.displayName?.isNotEmpty == true
+                      ? currentUser.displayName![0]
+                      : 'M')
+                  .toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              onPressed: () => context.push('/profile'),
+            ),
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -446,6 +343,204 @@ class HomeDashboardScreen extends ConsumerWidget {
                     icon: LucideIcons.playCircle,
                     color: AppColors.emerald,
                     onTap: () => context.go('/practice'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // 3. Smart Hub Features (Live Quiz, Leaderboard, Analytics)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'স্মার্ট ফিচার ও প্রতিযোগিতা',
+                  style: GoogleFonts.hindSiliguri(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'লাইভ ও রিয়েল-টাইম',
+                  style: GoogleFonts.hindSiliguri(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Live Quiz Hub Card
+            GestureDetector(
+              onTap: () => context.push('/live-quiz'),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFDC2626), Color(0xFFB91C1C)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.red.withValues(alpha: 0.25),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(LucideIcons.radio, color: Colors.white, size: 24),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'লাইভ কুইজ ও মডেল টেস্ট',
+                                style: GoogleFonts.hindSiliguri(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text(
+                                  'LIVE',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'টাইমড প্রিলিমিনারি পরীক্ষা, নেগেটিভ মার্কিং ও স্কোরকার্ড',
+                            style: GoogleFonts.hindSiliguri(
+                              fontSize: 12,
+                              color: Colors.white.withValues(alpha: 0.9),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(LucideIcons.chevronRight, color: Colors.white, size: 20),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Leaderboard & Analytics Pair
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => context.push('/leaderboard'),
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.cardDark : Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(LucideIcons.trophy, color: Colors.amber, size: 20),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'শীর্ষ লিডারবোর্ড',
+                            style: GoogleFonts.hindSiliguri(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'র‍্যাংকিং ও অবস্থান',
+                            style: GoogleFonts.hindSiliguri(
+                              fontSize: 11,
+                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => context.push('/analytics'),
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.cardDark : Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(LucideIcons.barChart2, color: AppColors.primary, size: 20),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'পারফরম্যান্স',
+                            style: GoogleFonts.hindSiliguri(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'নির্ভুলতা ও দক্ষতা',
+                            style: GoogleFonts.hindSiliguri(
+                              fontSize: 11,
+                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],

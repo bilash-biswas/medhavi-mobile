@@ -4,6 +4,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_controller.dart';
+import 'core/localization/locale_controller.dart';
 import 'core/router/app_router.dart';
 
 void main() async {
@@ -34,13 +36,16 @@ class MedhaviApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    final themeMode = ref.watch(themeModeControllerProvider);
+    final locale = ref.watch(localeControllerProvider);
 
     return MaterialApp.router(
       title: 'মেধাবী (Medhavi)',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
+      locale: locale,
       routerConfig: router,
     );
   }

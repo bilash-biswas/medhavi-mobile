@@ -50,9 +50,41 @@
 - বিষয়ভিত্তিক কুইজ এবং কাস্টম অনুশীলনের জন্য সেন্ট্রাল হাব।
 - প্রশ্ন ব্যাংকের ৫,৪২৩টি প্রশ্ন ছাড়াও বুকমার্ক এবং ভুল প্রশ্নের জন্য ডেডিকেটেড ড্রিল।
 
-### 🌓 ৭. ম্যাটেরিয়াল ৩ ডার্ক ও লাইট থিম
-- সিস্টেম ও ম্যানুয়াল ডার্ক মোড সাপোর্ট।
+### 🌓 ৭. ম্যাটেরিয়াল ৩ ডার্ক ও লাইট থিম (Dynamic 3-Way Theme)
+- লাইট (Light), ডার্ক (Dark) এবং সিস্টেম ডিফল্ট (System Default) থিম পরিবর্তন।
+- হাইভ (Hive) লোকাল স্টোরেজে স্বয়ংক্রিয় সংরক্ষণ ও অ্যাপ রিস্টার্টেও স্টেট অপরিবর্তিত রাখা।
 - চমৎকার বাংলা টাইপোগ্রাফির জন্য গুগলের **Hind Siliguri** ফন্ট ইন্টিগ্রেশন।
+
+### 🌐 ৮. দ্বিভাষিক লোকালাইজেশন (Bangla & English Localization)
+- বাংলা ও ইংরেজি ভাষার মধ্যে তাৎক্ষণিক সুইচের সুবিধা।
+- পুরো অ্যাপের টেক্সট, বাটন ও নোটিফিকেশনে রিয়েলটাইম লোকালাইজেশন সমর্থন।
+
+### 🏆 ৯. রিয়েল-টাইম লিডারবোর্ড (Leaderboard & 3D Podium)
+- সাপ্তাহিক (Weekly), মাসিক (Monthly) এবং সর্বকালীন (All-Time) র‍্যাঙ্কিং ট্যাব।
+- শীর্ষ ৩ জন মেধা অধিকারীর জন্য দৃষ্টিনন্দন **3D গোল্ড 🥇, সিলভার 🥈, ব্রোঞ্জ 🥉 পডিয়াম**।
+- তালিকার নিচে পিন করা স্টিকি বারে ব্যবহারকারীর নিজস্ব বর্তমান র‍্যাঙ্ক, অর্জিত XP ও অবস্থান প্রদর্শন।
+
+### 📊 ১০. পারফরম্যান্স অ্যানালিটিক্স (Detailed Analytics)
+- ওভারঅল একুরেসি গেজ (Overall Accuracy Gauge)।
+- ৪টি মূল মেট্রিক্স কার্ড: মোট উত্তর, সঠিক উত্তর, গড় গতি (সেকেন্ড/প্রশ্ন) এবং বর্তমান স্ট্রিক।
+- সাপ্তাহিক স্টাডি ট্রেন্ড ভিউয়ালাইজেশন (সপ্তাহের প্রতিদিনের অনুশীলনের বার চার্ট)।
+- ১০টি মূল বিসিএস বিষয়ের প্রতিটি বিষয়ের উপর পার্সেন্টেজ মাস্টারি প্রগ্রেস বার।
+
+### ⏱️ ১১. লাইভ কুইজ ও মেগা মডেল টেস্ট (Live Quiz & Timed Drills)
+- বাস্তবসম্মত বিসিএস পরীক্ষার মতো কাউন্টডাউন টাইমার।
+- ৫ মিনিটের স্পিড ড্রিল ও ২০০ নম্বরের মেগা মডেল টেস্ট মডিউল।
+- বিসিএস প্রিলির নেগেটিভ মার্কিং হিসাব (প্রতি ভুল উত্তরের জন্য -০.৫০ নম্বর কর্তন)।
+- পরীক্ষা শেষে স্বয়ংক্রিয় অ্যানালিটিক্যাল স্কোরকার্ড রিভিউ মডাল (সঠিক, ভুল, স্কোর, সময় ও নির্ভুলতা বিশ্লেষণ)।
+
+### 👤 ১২. প্রোফাইল ও টার্গেট ক্যাডার (User Profile)
+- প্রোফাইল অ্যাভাটার, নাম ও টার্গেট বিসিএস ক্যাডার ব্যাজ (যেমন: BCS Administration / Police)।
+- বিসিএস ব্যাচ ও কুইক প্রিফারেন্স টগল।
+
+### ⚙️ ১৩. সেটিংস ও কাস্টমাইজেশন (App Settings)
+- থিম মোড ও ভাষা চয়নকারী।
+- টার্গেট বিসিএস ব্যাচ ড্রপডাউন (যেমন: ৪৭তম বা ৪৮তম বিসিএস)।
+- KaTeX ম্যাথ অটো-রেন্ডার টগল ও হ্যাপটিক ভাইব্রেশন সুইচ।
+- ক্যাশ ক্লিয়ার (Clear Cache) এবং ভার্সন ইনফো কার্ড।
 
 ---
 
@@ -103,13 +135,22 @@ medhavi_mobile/
 │   │   │   └── study_question_card.dart     # সর্বজনীন প্রশ্ন কার্ড কম্পোনেন্ট
 │   │   ├── constants/
 │   │   │   └── app_colors.dart              # সেন্ট্রাল কালার প্যালেট
+│   │   ├── localization/
+│   │   │   ├── app_strings.dart             # দ্বিভাষিক (বাংলা ও ইংরেজি) ডিকশনারি
+│   │   │   └── locale_controller.dart       # রিঅ্যাক্টিভ লোকেল স্টেট কন্ট্রোলার
 │   │   ├── router/
-│   │   │   └── app_router.dart              # GoRouter StatefulShellRoute
+│   │   │   └── app_router.dart              # GoRouter কনফিগারেশন ও রুট ম্যাপ
+│   │   ├── services/
+│   │   │   └── preferences_service.dart     # Hive লোকাল ক্যাশ ও পারসিস্টেন্স
 │   │   ├── theme/
-│   │   │   └── app_theme.dart               # Material 3 & Hind Siliguri থিম
+│   │   │   ├── app_theme.dart               # Material 3 & Hind Siliguri থিম
+│   │   │   └── theme_controller.dart        # ৩-ওয়ে থিম সুইচ কন্ট্রোলার
 │   │   └── utils/
 │   │       └── bengali_numeral_converter.dart # বাংলা সংখ্যা কনভার্টার
 │   ├── features/
+│   │   ├── analytics/
+│   │   │   ├── presentation/controllers/analytics_controller.dart
+│   │   │   └── presentation/screens/analytics_screen.dart # প্রগ্রেস ও ট্রেন্ড
 │   │   ├── auth/
 │   │   │   ├── presentation/controllers/auth_controller.dart
 │   │   │   └── presentation/screens/
@@ -121,23 +162,36 @@ medhavi_mobile/
 │   │   │   └── presentation/screens/bookmarks_screen.dart
 │   │   ├── home/
 │   │   │   └── presentation/screens/home_dashboard_screen.dart
+│   │   ├── leaderboard/
+│   │   │   ├── domain/entities/leaderboard_entry.dart
+│   │   │   ├── presentation/controllers/leaderboard_controller.dart
+│   │   │   └── presentation/screens/leaderboard_screen.dart # 3D পডিয়াম ও র‍্যাঙ্ক
+│   │   ├── live_quiz/
+│   │   │   ├── presentation/controllers/live_quiz_controller.dart
+│   │   │   └── presentation/screens/
+│   │   │       ├── live_quiz_hub_screen.dart  # লাইভ টেস্ট হাব ও স্পিড ড্রিল
+│   │   │       └── active_quiz_screen.dart    # টাইমার, নেগেটিভ মার্কিং ও স্কোরকার্ড
 │   │   ├── mistakes/
 │   │   │   ├── data/datasources/mistakes_remote_datasource.dart
 │   │   │   ├── presentation/controllers/mistakes_controller.dart
 │   │   │   └── presentation/screens/mistake_bank_screen.dart
 │   │   ├── practice/
 │   │   │   └── presentation/screens/practice_hub_screen.dart
+│   │   ├── profile/
+│   │   │   └── presentation/screens/profile_screen.dart   # ইউজার প্রোফাইল ও টার্গেট
 │   │   ├── question_bank/
 │   │   │   ├── data/datasources/question_remote_datasource.dart
 │   │   │   ├── domain/entities/question_entity.dart
 │   │   │   ├── presentation/controllers/question_bank_controller.dart
 │   │   │   └── presentation/screens/question_bank_screen.dart
+│   │   ├── settings/
+│   │   │   └── presentation/screens/settings_screen.dart  # থিম, ল্যাঙ্গুয়েজ ও প্রিফারেন্স
 │   │   └── shell/
 │   │       └── presentation/screens/app_shell_scaffold.dart
 │   ├── firebase_options.dart       # ফায়ারবেস কনফিগারেশন
 │   └── main.dart                   # অ্যাপলিকেশন এন্ট্রি পয়েন্ট
 ├── test/
-│   └── widget_test.dart            # ইউনিট ও ডিসিরিয়ালাইজেশন টেস্ট
+│   └── widget_test.dart            # ইউনিট, লোকালাইজেশন ও স্কোরিং টেস্ট
 ├── pubspec.yaml                    # ডিপেন্ডেন্সি ও প্যাকেজ ম্যানিফেস্ট
 └── README.md                       # বিস্তারিত ডকুমেন্টেশন
 ```

@@ -56,10 +56,84 @@ class PracticeHubScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Featured Live Quiz Banner
+            GestureDetector(
+              onTap: () => context.push('/live-quiz'),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFDC2626), Color(0xFFB91C1C)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.red.withValues(alpha: 0.25),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(LucideIcons.radio, color: Colors.white, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            children: [
+                              Text(
+                                'লাইভ মেগা মডেল টেস্ট',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                '• LIVE',
+                                style: TextStyle(
+                                  color: Colors.amber,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'টাইমার ও নেগেটিভ মার্কিং সহ রিয়েল বিসিএস প্রিলি সিমুলেশন',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.white.withValues(alpha: 0.9),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(LucideIcons.chevronRight, color: Colors.white, size: 20),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
             // 1. Practice Modes Cards
             _PracticeBannerCard(
               title: 'বিসিএস প্রশ্ন ব্যাংক অনুশীলন',
-              subtitle: '১০ম থেকে ৪৬তম বিসিএস প্রিলির ৫,৪২৩টি প্রশ্ন একনজরে অনুশীলন করুন',
+              subtitle: '১০ম থেকে ৫০তম বিসিএস প্রিলির ৫,৪২৩টি প্রশ্ন একনজরে অনুশীলন করুন',
               badge: 'সকল বিষয়',
               icon: LucideIcons.bookOpen,
               color: AppColors.primary,
