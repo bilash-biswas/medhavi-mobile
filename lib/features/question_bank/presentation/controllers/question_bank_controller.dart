@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/datasources/question_remote_datasource.dart';
 import '../../domain/entities/question_entity.dart';
@@ -134,7 +135,8 @@ class QuestionBankController extends Notifier<QuestionBankState> {
 
       // 3. Fetch first page of questions
       await loadInitialQuestions();
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('QuestionBank init error: $e\n$st');
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
   }
@@ -152,13 +154,17 @@ class QuestionBankController extends Notifier<QuestionBankState> {
         pageSize: 20,
       );
 
+      debugPrint(
+          'Loaded ${result.questions.length} questions (hasMore: ${result.hasMore})');
+
       state = state.copyWith(
         questions: result.questions,
         lastDoc: result.lastDoc,
         hasMore: result.hasMore,
         isLoading: false,
       );
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('QuestionBank loadInitialQuestions error: $e\n$st');
       state = state.copyWith(
         isLoading: false,
         errorMessage: e.toString(),

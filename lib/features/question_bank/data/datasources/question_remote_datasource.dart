@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../../domain/entities/question_entity.dart';
 
 class PaginatedQuestionsResult {
@@ -49,55 +50,148 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
   CollectionReference<Map<String, dynamic>> get _questionsCol =>
       _firestore.collection('questions');
 
+  static const List<Map<String, dynamic>> _defaultBcsSubjects = [
+    {
+      'id': 'sub_bcs_bangla',
+      'name': 'বাংলা ভাষা ও সাহিত্য',
+      'nameEn': 'Bengali Language & Literature',
+      'slug': 'bangla',
+      'order': 1,
+    },
+    {
+      'id': 'sub_bcs_english',
+      'name': 'English Language & Literature',
+      'nameEn': 'English Language & Literature',
+      'slug': 'english',
+      'order': 2,
+    },
+    {
+      'id': 'sub_bcs_math',
+      'name': 'গাণিতিক যুক্তি (Mathematics)',
+      'nameEn': 'Mathematical Reasoning',
+      'slug': 'math',
+      'order': 3,
+    },
+    {
+      'id': 'sub_bcs_bd_affairs',
+      'name': 'বাংলাদেশ বিষয়াবলি',
+      'nameEn': 'Bangladesh Affairs',
+      'slug': 'bangladesh-affairs',
+      'order': 4,
+    },
+    {
+      'id': 'sub_bcs_intl_affairs',
+      'name': 'আন্তর্জাতিক বিষয়াবলি',
+      'nameEn': 'International Affairs',
+      'slug': 'international-affairs',
+      'order': 5,
+    },
+    {
+      'id': 'sub_bcs_science',
+      'name': 'সাধারণ বিজ্ঞান',
+      'nameEn': 'General Science',
+      'slug': 'general-science',
+      'order': 6,
+    },
+    {
+      'id': 'sub_bcs_ict',
+      'name': 'তথ্য ও যোগাযোগ প্রযুক্তি (ICT)',
+      'nameEn': 'Computer & ICT',
+      'slug': 'ict',
+      'order': 7,
+    },
+    {
+      'id': 'sub_bcs_mental_ability',
+      'name': 'মানসিক দক্ষতা',
+      'nameEn': 'Mental Ability',
+      'slug': 'mental-ability',
+      'order': 8,
+    },
+    {
+      'id': 'sub_bcs_geography',
+      'name': 'ভূগোল, পরিবেশ ও দুর্যোগ ব্যবস্থাপনা',
+      'nameEn': 'Geography & Environment',
+      'slug': 'geography',
+      'order': 9,
+    },
+    {
+      'id': 'sub_bcs_ethics',
+      'name': 'নৈতিকতা, মূল্যবোধ ও সুশাসন',
+      'nameEn': 'Ethics, Values & Governance',
+      'slug': 'ethics',
+      'order': 10,
+    },
+  ];
+
   @override
   Future<PaginatedQuestionsResult> getQuestions({
     QuestionFilterParams filters = const QuestionFilterParams(),
     int pageSize = 20,
     DocumentSnapshot? lastDocSnap,
   }) async {
-    Query<Map<String, dynamic>> q = _questionsCol;
+    Query<Map<String, dynamic>> buildBaseQuery({required bool includeOrderBy}) {
+      Query<Map<String, dynamic>> q = _questionsCol;
 
-    if (filters.examId != null && filters.examId!.isNotEmpty) {
-      q = q.where('examId', isEqualTo: filters.examId);
+      if (filters.examId != null && filters.examId!.isNotEmpty) {
+        q = q.where('examId', isEqualTo: filters.examId);
+      }
+
+      if (filters.subjectId != null &&
+          filters.subjectId!.isNotEmpty &&
+          filters.subjectId != 'all') {
+        if (filters.subjectId!.startsWith('sub_bcs_') ||
+            filters.subjectId!.startsWith('subj_bcs_')) {
+          final coreSlug =
+              filters.subjectId!.replaceFirst(RegExp(r'^subj?_bcs_'), '');
+          q = q.where('subjectId',
+              whereIn: ['sub_bcs_$coreSlug', 'subj_bcs_$coreSlug']);
+        } else {
+          q = q.where('subjectId', isEqualTo: filters.subjectId);
+        }
+      }
+
+      if (filters.difficulty != null &&
+          filters.difficulty!.isNotEmpty &&
+          filters.difficulty != 'all') {
+        q = q.where('difficulty', isEqualTo: filters.difficulty);
+      }
+
+      if (filters.tag != null && filters.tag!.isNotEmpty) {
+        q = q.where('tags', arrayContains: filters.tag!.toLowerCase().trim());
+      }
+
+      // Default status to published
+      q = q.where('status', isEqualTo: 'published');
+
+      if (includeOrderBy) {
+        q = q.orderBy('createdAt', descending: true);
+      }
+
+      if (lastDocSnap != null) {
+        q = q.startAfterDocument(lastDocSnap);
+      }
+
+      q = q.limit(pageSize + 1);
+      return q;
     }
 
-    if (filters.subjectId != null &&
-        filters.subjectId!.isNotEmpty &&
-        filters.subjectId != 'all') {
-      q = q.where('subjectId', isEqualTo: filters.subjectId);
+    QuerySnapshot<Map<String, dynamic>> snapshot;
+    try {
+      snapshot = await buildBaseQuery(includeOrderBy: true).get();
+    } catch (e) {
+      debugPrint(
+          'Notice: Composite index not ready or missing ($e), using resilient query fallback.');
+      snapshot = await buildBaseQuery(includeOrderBy: false).get();
     }
 
-    if (filters.difficulty != null &&
-        filters.difficulty!.isNotEmpty &&
-        filters.difficulty != 'all') {
-      q = q.where('difficulty', isEqualTo: filters.difficulty);
-    }
-
-    if (filters.tag != null && filters.tag!.isNotEmpty) {
-      q = q.where('tags', arrayContains: filters.tag!.toLowerCase().trim());
-    }
-
-    // Default status to published
-    q = q.where('status', isEqualTo: 'published');
-
-    q = q.orderBy('createdAt', descending: true);
-
-    if (lastDocSnap != null) {
-      q = q.startAfterDocument(lastDocSnap);
-    }
-
-    // Limit by pageSize + 1 to check if there is a next page
-    q = q.limit(pageSize + 1);
-
-    final snapshot = await q.get();
     final docs = snapshot.docs;
-
     final hasMore = docs.length > pageSize;
     final contentDocs = hasMore ? docs.sublist(0, pageSize) : docs;
     final lastDoc = contentDocs.isNotEmpty ? contentDocs.last : null;
 
     final questions = contentDocs
-        .map((docSnap) => QuestionEntity.fromFirestore(docSnap.id, docSnap.data()))
+        .map((docSnap) =>
+            QuestionEntity.fromFirestore(docSnap.id, docSnap.data()))
         .toList();
 
     return PaginatedQuestionsResult(
@@ -112,7 +206,6 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
     if (ids.isEmpty) return [];
 
     final List<QuestionEntity> results = [];
-    // Firestore whereIn supports maximum 30 items per batch
     const int batchSize = 30;
 
     for (int i = 0; i < ids.length; i += batchSize) {
@@ -128,28 +221,39 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
       }
     }
 
-    // Preserve the original ordering
     final idMap = {for (final q in results) q.id: q};
-    return ids.where((id) => idMap.containsKey(id)).map((id) => idMap[id]!).toList();
+    return ids
+        .where((id) => idMap.containsKey(id))
+        .map((id) => idMap[id]!)
+        .toList();
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getSubjects({String examId = 'exam_bcs'}) async {
-    final snapshot = await _firestore
-        .collection('subjects')
-        .where('examId', isEqualTo: examId)
-        .get();
+  Future<List<Map<String, dynamic>>> getSubjects(
+      {String examId = 'exam_bcs'}) async {
+    try {
+      final snapshot = await _firestore
+          .collection('subjects')
+          .where('examId', isEqualTo: examId)
+          .get();
 
-    return snapshot.docs.map((d) {
-      final data = d.data();
-      return {
-        'id': d.id,
-        'name': data['name'] ?? '',
-        'nameEn': data['nameEn'] ?? '',
-        'slug': data['slug'] ?? '',
-        'order': data['order'] ?? 0,
-      };
-    }).toList()
-      ..sort((a, b) => (a['order'] as int).compareTo(b['order'] as int));
+      final list = snapshot.docs.map((d) {
+        final data = d.data();
+        return {
+          'id': d.id,
+          'name': data['name'] ?? '',
+          'nameEn': data['nameEn'] ?? '',
+          'slug': data['slug'] ?? '',
+          'order': data['order'] ?? 0,
+        };
+      }).toList()
+        ..sort((a, b) => (a['order'] as int).compareTo(b['order'] as int));
+
+      if (list.isNotEmpty) return list;
+    } catch (e) {
+      debugPrint('Notice: Error loading subjects from Firestore: $e');
+    }
+
+    return _defaultBcsSubjects;
   }
 }

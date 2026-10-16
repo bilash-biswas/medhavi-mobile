@@ -485,6 +485,40 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                 ? const Center(
                     child: CircularProgressIndicator(),
                   )
+                : state.errorMessage != null && filteredList.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(LucideIcons.alertTriangle,
+                                  size: 48, color: Colors.amber),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'প্রশ্ন লোড করতে সমস্যা হয়েছে',
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                state.errorMessage!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                    fontSize: 12, color: Colors.grey),
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  notifier.loadInitialQuestions();
+                                },
+                                icon: const Icon(LucideIcons.refreshCw, size: 16),
+                                label: const Text('পুনরায় চেষ্টা করুন'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
                 : filteredList.isEmpty
                     ? Center(
                         child: Column(
