@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medhavi_mobile/core/utils/bengali_numeral_converter.dart';
+import 'package:medhavi_mobile/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:medhavi_mobile/features/question_bank/domain/entities/question_entity.dart';
 
 void main() {
@@ -58,6 +59,21 @@ void main() {
       expect(q.options.length, 4);
       expect(q.options[1].id, 'opt_2');
       expect(q.source, '46th-bcs');
+    });
+  });
+
+  group('AuthResult Tests', () {
+    test('creates successful and failed AuthResult instances', () {
+      const successResult = AuthResult(success: true);
+      expect(successResult.success, isTrue);
+      expect(successResult.error, isNull);
+
+      const errorResult = AuthResult(
+        success: false,
+        error: 'ইমেইল বা পাসওয়ার্ড সঠিক নয়।',
+      );
+      expect(errorResult.success, isFalse);
+      expect(errorResult.error, 'ইমেইল বা পাসওয়ার্ড সঠিক নয়।');
     });
   });
 }

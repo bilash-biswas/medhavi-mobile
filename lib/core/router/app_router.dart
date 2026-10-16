@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:medhavi_mobile/features/splash/presentation/screens/splash_screen.dart';
 import 'package:medhavi_mobile/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:medhavi_mobile/features/auth/presentation/screens/login_screen.dart';
+import 'package:medhavi_mobile/features/auth/presentation/screens/register_screen.dart';
 import 'package:medhavi_mobile/features/shell/presentation/screens/app_shell_scaffold.dart';
 import 'package:medhavi_mobile/features/home/presentation/screens/home_dashboard_screen.dart';
 import 'package:medhavi_mobile/features/question_bank/presentation/screens/question_bank_screen.dart';
@@ -31,6 +33,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/onboarding',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const OnboardingScreen(),
+      ),
+
+      // 3. Login Screen (Root Navigator, no bottom nav bar)
+      GoRoute(
+        path: '/login',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const LoginScreen(),
+      ),
+
+      // 4. Register Screen (Root Navigator, no bottom nav bar)
+      GoRoute(
+        path: '/register',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const RegisterScreen(),
       ),
 
       // 3. Main Application Shell (With persistent bottom nav bar)

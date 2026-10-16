@@ -115,21 +115,41 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     ],
                   ),
 
-                  // Skip Button
-                  if (!isLastPage)
-                    TextButton(
-                      onPressed: _completeOnboarding,
-                      child: Text(
-                        'স্কিপ করুন',
-                        style: GoogleFonts.hindSiliguri(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondaryLight,
+                  // Auth and Skip Actions
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () async {
+                          final prefs = ref.read(preferencesServiceProvider);
+                          await prefs.setHasSeenOnboarding(true);
+                          if (!context.mounted) return;
+                          context.push('/login');
+                        },
+                        child: Text(
+                          'লগইন',
+                          style: GoogleFonts.hindSiliguri(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
                         ),
                       ),
-                    ),
+                      if (!isLastPage)
+                        TextButton(
+                          onPressed: _completeOnboarding,
+                          child: Text(
+                            'স্কিপ',
+                            style: GoogleFonts.hindSiliguri(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),

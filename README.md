@@ -111,7 +111,10 @@ medhavi_mobile/
 │   │       └── bengali_numeral_converter.dart # বাংলা সংখ্যা কনভার্টার
 │   ├── features/
 │   │   ├── auth/
-│   │   │   └── presentation/controllers/auth_controller.dart
+│   │   │   ├── presentation/controllers/auth_controller.dart
+│   │   │   └── presentation/screens/
+│   │   │       ├── login_screen.dart        # আধুনিক লগইন ও পাসওয়ার্ড রিকভারি
+│   │   │       └── register_screen.dart     # পূর্ণ নাম ও ভ্যালিডেশন সহ রেজিস্ট্রেশন
 │   │   ├── bookmarks/
 │   │   │   ├── data/datasources/bookmarks_remote_datasource.dart
 │   │   │   ├── presentation/controllers/bookmarks_controller.dart
