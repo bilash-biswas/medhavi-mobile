@@ -9,6 +9,10 @@ import '../controllers/question_bank_controller.dart';
 // BCS Batches list sorted newest to oldest
 const List<Map<String, String>> kBcsBatches = [
   {'id': '', 'label': 'সব বিসিএস ব্যাচ (All Batches)'},
+  {'id': '50th-bcs', 'label': '৫০তম বিসিএস (50th BCS)'},
+  {'id': '49th-bcs', 'label': '৪৯তম বিসিএস (49th BCS)'},
+  {'id': '48th-bcs', 'label': '৪৮তম বিসিএস (48th BCS)'},
+  {'id': '47th-bcs', 'label': '৪৭তম বিসিএস (47th BCS)'},
   {'id': '46th-bcs', 'label': '৪৬তম বিসিএস (46th BCS)'},
   {'id': '45th-bcs', 'label': '৪৫তম বিসিএস (45th BCS)'},
   {'id': '44th-bcs', 'label': '৪৪তম বিসিএস (44th BCS)'},
@@ -204,7 +208,7 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  '১০ম থেকে ৪৬তম বিসিএস প্রিলিমিনারি প্রশ্ন ও ব্যাখ্যা',
+                  '১০ম থেকে ৫০তম বিসিএস প্রিলিমিনারি প্রশ্ন ও ব্যাখ্যা',
                   style: TextStyle(
                     fontSize: 11,
                     color: AppColors.textSecondaryLight,

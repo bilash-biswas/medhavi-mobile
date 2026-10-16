@@ -179,7 +179,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                               size: 14, color: Colors.amber),
                           SizedBox(width: 6),
                           Text(
-                            '১০ম - ৪৬তম বিসিএস সংগ্রহ',
+                            '১০ম - ৫০তম বিসিএস সংগ্রহ',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.white,

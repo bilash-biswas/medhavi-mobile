@@ -19,10 +19,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   final List<_OnboardingData> _pages = const [
     _OnboardingData(
-      badge: '১০ম থেকে ৪৬তম বিসিএস',
+      badge: '১০ম থেকে ৫০তম বিসিএস',
       title: 'বিসিএস প্রশ্ন ব্যাংকের সম্পূর্ণ ভাণ্ডার',
       description:
-          '১০ম থেকে ৪৬তম বিসিএস প্রিলিমিনারি পরীক্ষার ৫,৪২৩+ নির্ভুল প্রশ্ন, প্রতিটি বিষয়ের স্ট্যান্ডার্ড উত্তর ও বিস্তারিত সমাধান এখন আপনার হাতের মুঠোয়।',
+          '১০ম থেকে ৫০তম বিসিএস প্রিলিমিনারি পরীক্ষার ৫,৪২৩+ নির্ভুল প্রশ্ন, প্রতিটি বিষয়ের স্ট্যান্ডার্ড উত্তর ও বিস্তারিত সমাধান এখন আপনার হাতের মুঠোয়।',
       icon: LucideIcons.bookOpen,
       gradientColors: [Color(0xFF4F46E5), Color(0xFF3730A3)],
       chips: ['১০টি বিষয়', 'ব্যাচ ফিল্টার', 'অফলাইন রিভিশন'],

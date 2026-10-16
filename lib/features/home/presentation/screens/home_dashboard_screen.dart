@@ -102,7 +102,7 @@ class HomeDashboardScreen extends ConsumerWidget {
                                 size: 13, color: Colors.amber),
                             SizedBox(width: 5),
                             Text(
-                              '১০ম - ৪৬তম বিসিএস সংগ্রহ',
+                              '১০ম - ৫০তম বিসিএস সংগ্রহ',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 11,
@@ -160,7 +160,7 @@ class HomeDashboardScreen extends ConsumerWidget {
                   child: _MetricCard(
                     title: 'প্রশ্ন ব্যাংক',
                     value: '৫,৪২৩টি',
-                    subtitle: '১০ম - ৪৬তম বিসিএস',
+                    subtitle: '১০ম - ৫০তম বিসিএস',
                     icon: LucideIcons.layers,
                     color: AppColors.primary,
                     onTap: () => context.go('/question-bank'),
@@ -220,6 +220,46 @@ class HomeDashboardScreen extends ConsumerWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
+                _BatchChip(
+                  label: '৫০তম বিসিএস',
+                  tag: '50th-bcs',
+                  onTap: () {
+                    ref
+                        .read(questionBankControllerProvider.notifier)
+                        .setBatch('50th-bcs');
+                    context.go('/question-bank');
+                  },
+                ),
+                _BatchChip(
+                  label: '৪৯তম বিসিএস',
+                  tag: '49th-bcs',
+                  onTap: () {
+                    ref
+                        .read(questionBankControllerProvider.notifier)
+                        .setBatch('49th-bcs');
+                    context.go('/question-bank');
+                  },
+                ),
+                _BatchChip(
+                  label: '৪৮তম বিসিএস',
+                  tag: '48th-bcs',
+                  onTap: () {
+                    ref
+                        .read(questionBankControllerProvider.notifier)
+                        .setBatch('48th-bcs');
+                    context.go('/question-bank');
+                  },
+                ),
+                _BatchChip(
+                  label: '৪৭তম বিসিএস',
+                  tag: '47th-bcs',
+                  onTap: () {
+                    ref
+                        .read(questionBankControllerProvider.notifier)
+                        .setBatch('47th-bcs');
+                    context.go('/question-bank');
+                  },
+                ),
                 _BatchChip(
                   label: '৪৬তম বিসিএস',
                   tag: '46th-bcs',

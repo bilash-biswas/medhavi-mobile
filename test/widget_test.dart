@@ -7,10 +7,15 @@ void main() {
     test('converts English digits to Bengali digits', () {
       expect(BengaliNumeralConverter.toBengaliNumber(0), '০');
       expect(BengaliNumeralConverter.toBengaliNumber(46), '৪৬');
+      expect(BengaliNumeralConverter.toBengaliNumber(50), '৫০');
       expect(BengaliNumeralConverter.toBengaliNumber(5423), '৫,৪২৩');
     });
 
     test('converts BCS source tags to clean Bengali titles', () {
+      expect(
+        BengaliNumeralConverter.toBengaliBcsTitle('50th-bcs'),
+        '৫০তম বিসিএস',
+      );
       expect(
         BengaliNumeralConverter.toBengaliBcsTitle('46th-bcs'),
         '৪৬তম বিসিএস',
