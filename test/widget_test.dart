@@ -1,30 +1,58 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:medhavi_mobile/main.dart';
+import 'package:medhavi_mobile/core/utils/bengali_numeral_converter.dart';
+import 'package:medhavi_mobile/features/question_bank/domain/entities/question_entity.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('BengaliNumeralConverter Tests', () {
+    test('converts English digits to Bengali digits', () {
+      expect(BengaliNumeralConverter.toBengaliNumber(0), '০');
+      expect(BengaliNumeralConverter.toBengaliNumber(46), '৪৬');
+      expect(BengaliNumeralConverter.toBengaliNumber(5423), '৫,৪২৩');
+    });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    test('converts BCS source tags to clean Bengali titles', () {
+      expect(
+        BengaliNumeralConverter.toBengaliBcsTitle('46th-bcs'),
+        '৪৬তম বিসিএস',
+      );
+      expect(
+        BengaliNumeralConverter.toBengaliBcsTitle('42nd-bcs'),
+        '৪২তম বিসিএস',
+      );
+      expect(
+        BengaliNumeralConverter.toBengaliBcsTitle('39th-bcs-special'),
+        '৩৯তম বিসিএস',
+      );
+    });
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  group('QuestionEntity Deserialization Tests', () {
+    test('correctly deserializes Firestore document map', () {
+      final mockData = {
+        'text': r'যদি $a + b = 5$ এবং $a - b = 3$ হয়, তবে $a^2 - b^2$ এর মান কত?',
+        'examId': 'exam_bcs',
+        'subjectId': 'bcs_math',
+        'difficulty': 'medium',
+        'correctOptionId': 'opt_2',
+        'explanation': r'আমরা জানি, $a^2 - b^2 = (a+b)(a-b) = 5 \times 3 = 15$',
+        'source': '46th-bcs',
+        'options': [
+          {'id': 'opt_1', 'text': '10'},
+          {'id': 'opt_2', 'text': '15'},
+          {'id': 'opt_3', 'text': '20'},
+          {'id': 'opt_4', 'text': '25'},
+        ],
+        'tags': ['46th-bcs', 'algebra'],
+      };
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+      final q = QuestionEntity.fromFirestore('q_test_1', mockData);
+
+      expect(q.id, 'q_test_1');
+      expect(q.text, contains(r'$a + b = 5$'));
+      expect(q.correctOptionId, 'opt_2');
+      expect(q.options.length, 4);
+      expect(q.options[1].id, 'opt_2');
+      expect(q.source, '46th-bcs');
+    });
   });
 }

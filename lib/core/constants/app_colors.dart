@@ -10,6 +10,12 @@ class AppColors {
   static const Color primaryBgLight = Color(0xFFEEF2FF);
   static const Color primaryBgDark = Color(0xFF1E1B4B);
 
+  // Secondary & Accent
+  static const Color secondary = Color(0xFF06B6D4);
+  static const Color emerald = Color(0xFF10B981);
+  static const Color rose = Color(0xFFF43F5E);
+  static const Color amber = Color(0xFFF59E0B);
+
   // Neutral Backgrounds & Cards
   static const Color backgroundLight = Color(0xFFF8FAFC);
   static const Color cardLight = Color(0xFFFFFFFF);
@@ -20,15 +26,15 @@ class AppColors {
   static const Color borderDark = Color(0xFF1F2937);
 
   // Status Colors
-  static const Color success = Color(0xFF10B981);
+  static const Color success = emerald;
   static const Color successLight = Color(0xFFECFDF5);
   static const Color successDark = Color(0xFF064E3B);
 
-  static const Color error = Color(0xFFF43F5E);
+  static const Color error = rose;
   static const Color errorLight = Color(0xFFFFF1F2);
   static const Color errorDark = Color(0xFF4C0519);
 
-  static const Color warning = Color(0xFFF59E0B);
+  static const Color warning = amber;
   static const Color warningLight = Color(0xFFFFFBEB);
   static const Color warningDark = Color(0xFF78350F);
 

@@ -35,6 +35,7 @@ class QuestionEntity {
   final String? source;
   final List<String> tags;
   final String? imageUrl;
+  final String? textEn;
 
   const QuestionEntity({
     required this.id,
@@ -49,7 +50,11 @@ class QuestionEntity {
     this.source,
     this.tags = const [],
     this.imageUrl,
+    this.textEn,
   });
+
+  /// Alias getter for question text
+  String get text => question;
 
   factory QuestionEntity.fromFirestore(String id, Map<String, dynamic> data) {
     final rawOptions = data['options'] as List<dynamic>? ?? [];
@@ -64,7 +69,7 @@ class QuestionEntity {
       id: id,
       examId: data['examId']?.toString() ?? 'exam_bcs',
       subjectId: data['subjectId']?.toString() ?? 'sub_bcs_bangla',
-      question: data['question']?.toString() ?? '',
+      question: data['question']?.toString() ?? data['text']?.toString() ?? '',
       options: options,
       correctOptionId: data['correctOptionId']?.toString() ?? 'a',
       explanation: data['explanation']?.toString() ?? '',
@@ -73,6 +78,7 @@ class QuestionEntity {
       source: data['source']?.toString(),
       tags: tags,
       imageUrl: data['imageUrl']?.toString(),
+      textEn: data['textEn']?.toString(),
     );
   }
 
@@ -89,6 +95,7 @@ class QuestionEntity {
       'source': source,
       'tags': tags,
       'imageUrl': imageUrl,
+      'textEn': textEn,
     };
   }
 }

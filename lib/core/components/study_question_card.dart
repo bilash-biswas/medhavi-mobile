@@ -162,7 +162,7 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -183,7 +183,7 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+                        color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -206,7 +206,7 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
                             color: isDark ? AppColors.primaryBgDark : AppColors.primaryBgLight,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: AppColors.primary.withOpacity(0.3),
+                              color: AppColors.primary.withValues(alpha: 0.3),
                             ),
                           ),
                           child: Text(
@@ -229,7 +229,7 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+                            color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -338,7 +338,7 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: isDark ? Colors.black26 : Colors.black.withOpacity(0.02),
+              color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.02),
               border: Border(
                 top: BorderSide(
                   color: isDark ? AppColors.borderDark : AppColors.borderLight,
@@ -355,7 +355,7 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: _isRevealed
-                          ? (isDark ? Colors.white12 : Colors.black.withOpacity(0.08))
+                          ? (isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.08))
                           : AppColors.primary,
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -426,10 +426,10 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.primaryBgDark.withOpacity(0.3) : AppColors.primaryBgLight.withOpacity(0.6),
+                color: isDark ? AppColors.primaryBgDark.withValues(alpha: 0.3) : AppColors.primaryBgLight.withValues(alpha: 0.6),
                 border: Border(
                   top: BorderSide(
-                    color: AppColors.primary.withOpacity(0.2),
+                    color: AppColors.primary.withValues(alpha: 0.2),
                   ),
                 ),
               ),
@@ -485,7 +485,7 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
                       return Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.04),
+                          color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.04),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -593,9 +593,9 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
         return Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.successDark.withOpacity(0.4) : AppColors.successLight,
+            color: isDark ? AppColors.successDark.withValues(alpha: 0.4) : AppColors.successLight,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.success.withOpacity(0.4)),
+            border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
           ),
           child: Row(
             children: [
@@ -630,9 +630,9 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.errorDark.withOpacity(0.4) : AppColors.errorLight,
+                color: isDark ? AppColors.errorDark.withValues(alpha: 0.4) : AppColors.errorLight,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.error.withOpacity(0.4)),
+                border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
               ),
               child: Row(
                 children: [
@@ -665,9 +665,9 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.successDark.withOpacity(0.4) : AppColors.successLight,
+                color: isDark ? AppColors.successDark.withValues(alpha: 0.4) : AppColors.successLight,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.success.withOpacity(0.4)),
+                border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
               ),
               child: Row(
                 children: [
@@ -702,9 +702,9 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
       return Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.successDark.withOpacity(0.3) : AppColors.successLight,
+          color: isDark ? AppColors.successDark.withValues(alpha: 0.3) : AppColors.successLight,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.success.withOpacity(0.4)),
+          border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
         ),
         child: Row(
           children: [
@@ -745,19 +745,19 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
     required VoidCallback onTap,
   }) {
     Color borderColor = isDark ? AppColors.borderDark : AppColors.borderLight;
-    Color bgColor = isDark ? Colors.white.withOpacity(0.03) : Colors.black.withOpacity(0.02);
-    Color badgeBg = isDark ? Colors.white12 : Colors.black.withOpacity(0.06);
+    Color bgColor = isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02);
+    Color badgeBg = isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.06);
     Color badgeFg = isDark ? Colors.white70 : Colors.black87;
 
     if (isRevealed) {
       if (isCorrect) {
         borderColor = AppColors.success;
-        bgColor = isDark ? AppColors.successDark.withOpacity(0.35) : AppColors.successLight;
+        bgColor = isDark ? AppColors.successDark.withValues(alpha: 0.35) : AppColors.successLight;
         badgeBg = AppColors.success;
         badgeFg = Colors.white;
       } else if (isSelected && !isCorrect) {
         borderColor = AppColors.error;
-        bgColor = isDark ? AppColors.errorDark.withOpacity(0.35) : AppColors.errorLight;
+        bgColor = isDark ? AppColors.errorDark.withValues(alpha: 0.35) : AppColors.errorLight;
         badgeBg = AppColors.error;
         badgeFg = Colors.white;
       } else {
@@ -827,7 +827,7 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
                     decoration: BoxDecoration(
                       color: AppColors.successLight,
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: AppColors.success.withOpacity(0.3)),
+                      border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
                     ),
                     child: const Text(
                       'আপনার উত্তর (সঠিক) ✓',
@@ -840,7 +840,7 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
                     decoration: BoxDecoration(
                       color: AppColors.errorLight,
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                      border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
                     ),
                     child: const Text(
                       'আপনার উত্তর ✗',
@@ -853,7 +853,7 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
                     decoration: BoxDecoration(
                       color: AppColors.successLight,
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: AppColors.success.withOpacity(0.3)),
+                      border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
                     ),
                     child: const Text(
                       'সঠিক উত্তর ✓',

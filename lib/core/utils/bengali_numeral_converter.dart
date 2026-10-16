@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 /// Bengali Numeral & Ordinal Utility
 class BengaliNumeralConverter {
   static const Map<String, String> _bnDigits = {
@@ -13,9 +15,15 @@ class BengaliNumeralConverter {
     '9': '৯',
   };
 
-  /// Converts any integer or number string to Bengali digits (e.g., 50 -> ৫০)
-  static String toBengaliNumber(dynamic number) {
-    final str = number.toString();
+  /// Converts any integer or number string to Bengali digits (e.g., 50 -> ৫০, 5423 -> ৫,৪২৩)
+  static String toBengaliNumber(dynamic number, {bool useGrouping = true}) {
+    String str;
+    if (number is num && useGrouping && number >= 1000) {
+      str = NumberFormat('#,##,###').format(number);
+    } else {
+      str = number.toString();
+    }
+
     final buffer = StringBuffer();
     for (int i = 0; i < str.length; i++) {
       final char = str[i];
@@ -32,7 +40,7 @@ class BengaliNumeralConverter {
     if (numPart.isEmpty) return batchStr;
 
     final num = int.tryParse(numPart) ?? 0;
-    final bnNum = toBengaliNumber(num);
+    final bnNum = toBengaliNumber(num, useGrouping: false);
 
     String suffix;
     if (num == 1) {
