@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -21,11 +23,62 @@ import 'package:medhavi_mobile/features/bookmarks/presentation/screens/bookmarks
 final GlobalKey<NavigatorState> _rootNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'root');
 
+class _AuthNotifier extends ChangeNotifier {
+  late final StreamSubscription<User?> _subscription;
+
+  _AuthNotifier(FirebaseAuth auth) {
+    _subscription = auth.authStateChanges().listen((_) {
+      notifyListeners();
+    });
+  }
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
+
+final authNotifierProvider = Provider<_AuthNotifier>((ref) {
+  final notifier = _AuthNotifier(FirebaseAuth.instance);
+  ref.onDispose(() => notifier.dispose());
+  return notifier;
+});
+
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final authNotifier = ref.watch(authNotifierProvider);
+
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/splash',
     debugLogDiagnostics: false,
+    refreshListenable: authNotifier,
+    redirect: (context, state) {
+      final user = FirebaseAuth.instance.currentUser;
+      final isLoggedIn = user != null && !user.isAnonymous;
+      final location = state.matchedLocation;
+
+      final isSplash = location == '/splash';
+      final isOnboarding = location == '/onboarding';
+      final isAuthRoute = location == '/login' || location == '/register';
+
+      // 1. Allow splash and onboarding to display
+      if (isSplash || isOnboarding) {
+        return null;
+      }
+
+      // 2. Strict Authentication: without sign in, user cannot visit ANY screen
+      if (!isLoggedIn) {
+        return isAuthRoute ? null : '/login';
+      }
+
+      // 3. When signed in, redirect away from auth routes to home dashboard
+      if (isAuthRoute) {
+        return '/';
+      }
+
+      return null;
+    },
     routes: [
       // 1. Splash Screen
       GoRoute(

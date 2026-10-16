@@ -183,4 +183,56 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
   });
+
+  group('Auth Guard Redirect Logic Tests', () {
+    String? checkRedirect({
+      required bool isLoggedIn,
+      required String location,
+    }) {
+      final isSplash = location == '/splash';
+      final isOnboarding = location == '/onboarding';
+      final isAuthRoute = location == '/login' || location == '/register';
+
+      if (isSplash || isOnboarding) {
+        return null;
+      }
+
+      if (!isLoggedIn) {
+        return isAuthRoute ? null : '/login';
+      }
+
+      if (isAuthRoute) {
+        return '/';
+      }
+
+      return null;
+    }
+
+    test('unauthenticated user is blocked and redirected to /login for all protected screens', () {
+      expect(checkRedirect(isLoggedIn: false, location: '/'), '/login');
+      expect(checkRedirect(isLoggedIn: false, location: '/question-bank'), '/login');
+      expect(checkRedirect(isLoggedIn: false, location: '/practice'), '/login');
+      expect(checkRedirect(isLoggedIn: false, location: '/mistakes'), '/login');
+      expect(checkRedirect(isLoggedIn: false, location: '/bookmarks'), '/login');
+      expect(checkRedirect(isLoggedIn: false, location: '/leaderboard'), '/login');
+      expect(checkRedirect(isLoggedIn: false, location: '/analytics'), '/login');
+      expect(checkRedirect(isLoggedIn: false, location: '/live-quiz'), '/login');
+      expect(checkRedirect(isLoggedIn: false, location: '/profile'), '/login');
+      expect(checkRedirect(isLoggedIn: false, location: '/settings'), '/login');
+    });
+
+    test('unauthenticated user can access login, register, splash and onboarding', () {
+      expect(checkRedirect(isLoggedIn: false, location: '/splash'), isNull);
+      expect(checkRedirect(isLoggedIn: false, location: '/onboarding'), isNull);
+      expect(checkRedirect(isLoggedIn: false, location: '/login'), isNull);
+      expect(checkRedirect(isLoggedIn: false, location: '/register'), isNull);
+    });
+
+    test('authenticated user can access protected screens and is redirected away from login/register', () {
+      expect(checkRedirect(isLoggedIn: true, location: '/'), isNull);
+      expect(checkRedirect(isLoggedIn: true, location: '/question-bank'), isNull);
+      expect(checkRedirect(isLoggedIn: true, location: '/login'), '/');
+      expect(checkRedirect(isLoggedIn: true, location: '/register'), '/');
+    });
+  });
 }

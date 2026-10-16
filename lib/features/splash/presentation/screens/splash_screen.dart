@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:medhavi_mobile/core/constants/app_colors.dart';
 import 'package:medhavi_mobile/core/services/preferences_service.dart';
 
@@ -47,10 +48,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     Timer(const Duration(milliseconds: 2200), () {
       if (!mounted) return;
-      if (prefs.hasSeenOnboarding) {
+      final user = FirebaseAuth.instance.currentUser;
+      final isLoggedIn = user != null && !user.isAnonymous;
+
+      if (!prefs.hasSeenOnboarding) {
+        context.go('/onboarding');
+      } else if (isLoggedIn) {
         context.go('/');
       } else {
-        context.go('/onboarding');
+        context.go('/login');
       }
     });
   }

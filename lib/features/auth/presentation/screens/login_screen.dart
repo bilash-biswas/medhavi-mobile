@@ -21,7 +21,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   bool _obscurePassword = true;
   bool _isLoading = false;
-  bool _isGuestLoading = false;
   bool _isGoogleLoading = false;
   String? _errorMessage;
 
@@ -58,42 +57,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             style: GoogleFonts.hindSiliguri(fontWeight: FontWeight.w600),
           ),
           backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      if (context.canPop()) {
-        context.pop();
-      } else {
-        context.go('/');
-      }
-    } else {
-      setState(() {
-        _errorMessage = result.error;
-      });
-    }
-  }
-
-  Future<void> _handleGuestLogin() async {
-    setState(() {
-      _isGuestLoading = true;
-      _errorMessage = null;
-    });
-
-    final notifier = ref.read(authControllerProvider.notifier);
-    final result = await notifier.signInAnonymously();
-
-    if (!mounted) return;
-
-    setState(() => _isGuestLoading = false);
-
-    if (result.success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'গেস্ট হিসেবে প্রবেশ করেছেন। আপনার ডিভাইসে ডেটা সংরক্ষিত থাকবে।',
-            style: GoogleFonts.hindSiliguri(fontWeight: FontWeight.w600),
-          ),
-          backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -641,44 +604,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   // 7. Google Sign-In Button
                   GoogleSignInButton(
                     isLoading: _isGoogleLoading,
-                    onPressed: (_isLoading || _isGuestLoading || _isGoogleLoading)
+                    onPressed: (_isLoading || _isGoogleLoading)
                         ? null
                         : _handleGoogleLogin,
                   ),
-                  const SizedBox(height: 12),
-
-                  // 8. Guest Login Option
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: BorderSide(
-                        color: isDark
-                            ? AppColors.borderDark
-                            : AppColors.borderLight,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    icon: _isGuestLoading
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(LucideIcons.userCheck, size: 18),
-                    label: Text(
-                      'গেস্ট হিসেবে চালিয়ে যান',
-                      style: GoogleFonts.hindSiliguri(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    onPressed: (_isLoading || _isGuestLoading || _isGoogleLoading)
-                        ? null
-                        : _handleGuestLogin,
-                  ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
 
                   // 8. Register Redirect Link
                   Row(

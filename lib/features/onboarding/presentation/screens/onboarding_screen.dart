@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:medhavi_mobile/core/constants/app_colors.dart';
 import 'package:medhavi_mobile/core/services/preferences_service.dart';
 
@@ -51,7 +52,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final prefs = ref.read(preferencesServiceProvider);
     await prefs.setHasSeenOnboarding(true);
     if (!mounted) return;
-    context.go('/');
+    final user = FirebaseAuth.instance.currentUser;
+    final isLoggedIn = user != null && !user.isAnonymous;
+    if (isLoggedIn) {
+      context.go('/');
+    } else {
+      context.go('/login');
+    }
   }
 
   void _nextPage() {
