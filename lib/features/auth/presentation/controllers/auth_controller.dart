@@ -9,7 +9,9 @@ final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
 
 final googleSignInProvider = Provider<GoogleSignIn>((ref) {
   return GoogleSignIn(
-    scopes: ['email'],
+    scopes: ['email', 'profile'],
+    serverClientId:
+        '556026049349-sqsm07dmla41k1tac0qak39nbu3cedg9.apps.googleusercontent.com',
   );
 });
 
@@ -171,11 +173,25 @@ class AuthController extends Notifier<AsyncValue<User?>> {
       state = AsyncValue.data(userCredential.user);
       return AuthResult(success: true, user: userCredential.user);
     } on FirebaseAuthException catch (e) {
+      debugPrint('Google Sign-In FirebaseAuthException: [${e.code}] ${e.message}');
       return AuthResult(success: false, error: _mapFirebaseError(e));
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('Google Sign-In Exception: $e\n$st');
+      String userMessage =
+          'গুগল অ্যাকাউন্টে সাইন-ইন করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।';
+      final errorStr = e.toString();
+      if (errorStr.contains('10') || errorStr.contains('DEVELOPER_ERROR')) {
+        userMessage =
+            'গুগল সাইন-ইন কনফিগারেশন ত্রুটি (API 10)। ফায়ারবেস কনসোলে SHA-1 ফিংগারপ্রিন্ট যাচাই করুন।';
+      } else if (errorStr.contains('12500')) {
+        userMessage =
+            'গুগল প্লে সার্ভিসেস ত্রুটি (12500)। আপনার ডিভাইসের গুগল প্লে সার্ভিসেস আপডেট করুন।';
+      } else if (errorStr.contains('network') || errorStr.contains('Network')) {
+        userMessage = 'ইন্টারনেট সংযোগ পাওয়া যায়নি। ইন্টারনেট সংযোগ চেক করুন।';
+      }
       return AuthResult(
         success: false,
-        error: 'গুগল অ্যাকাউন্টে সাইন-ইন করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।',
+        error: kDebugMode ? '$userMessage\n($e)' : userMessage,
       );
     }
   }

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "556026049349",
+    "project_id": "studyhub-bd-39887",
+    "storage_bucket": "studyhub-bd-39887.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:556026049349:android:daa8917ef93011233ac42c",
+        "android_client_info": {
+          "package_name": "bd.medhavi.medhavi_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "556026049349-7f5slht4p1sjteggrl05h512h001a026.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "bd.medhavi.medhavi_mobile",
+            "certificate_hash": "21a289b3e7f17b45d7e3c7290047283eed752396"
+          }
+        },
+        {
+          "client_id": "556026049349-sqsm07dmla41k1tac0qak39nbu3cedg9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjEmXl_LKcwtjqeu5uJumKn-OX_AIM_jY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "556026049349-sqsm07dmla41k1tac0qak39nbu3cedg9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
