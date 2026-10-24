@@ -321,10 +321,7 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                         icon: const Icon(LucideIcons.rotateCcw, size: 18),
                         onPressed: () {
                           _searchController.clear();
-                          notifier.setSearchQuery('');
-                          notifier.setBatch('');
-                          notifier.setSubject('');
-                          notifier.setDifficulty('all');
+                          notifier.resetAllFilters();
                         },
                       ),
                     ],
@@ -669,10 +666,7 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                                 ElevatedButton(
                                   onPressed: () {
                                     _searchController.clear();
-                                    notifier.setSearchQuery('');
-                                    notifier.setBatch('');
-                                    notifier.setSubject('');
-                                    notifier.setDifficulty('all');
+                                    notifier.resetAllFilters();
                                   },
                                   child: Text(AppStrings.t(
                                       ref, 'সব ফিল্টার মুছুন', 'Clear All Filters')),

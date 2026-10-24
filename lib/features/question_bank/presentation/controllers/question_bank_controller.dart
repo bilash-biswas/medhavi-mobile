@@ -244,6 +244,16 @@ class QuestionBankController extends Notifier<QuestionBankState> {
     loadInitialQuestions();
   }
 
+  void resetAllFilters() {
+    state = state.copyWith(
+      selectedBatchTag: '',
+      selectedSubjectId: '',
+      selectedDifficulty: 'all',
+      searchQuery: '',
+    );
+    loadInitialQuestions();
+  }
+
   void setSearchQuery(String query) {
     state = state.copyWith(searchQuery: query);
   }

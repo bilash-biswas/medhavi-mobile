@@ -125,6 +125,18 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
     },
   ];
 
+  /// Normalizes batch and subject tags to match Firestore storage convention
+  /// e.g. "50th-bcs" -> "50thbcs-bcs", "10th-bcs" -> "10thbcs-bcs"
+  static String? normalizeTag(String? rawTag) {
+    if (rawTag == null || rawTag.trim().isEmpty) return null;
+    final tag = rawTag.toLowerCase().trim();
+    final match = RegExp(r'^(\d+(?:st|nd|rd|th))-bcs$').firstMatch(tag);
+    if (match != null) {
+      return '${match.group(1)}bcs-bcs';
+    }
+    return tag;
+  }
+
   @override
   Future<PaginatedQuestionsResult> getQuestions({
     QuestionFilterParams filters = const QuestionFilterParams(),
@@ -159,7 +171,8 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
       }
 
       if (filters.tag != null && filters.tag!.isNotEmpty) {
-        q = q.where('tags', arrayContains: filters.tag!.toLowerCase().trim());
+        final normalizedTag = normalizeTag(filters.tag);
+        q = q.where('tags', arrayContains: normalizedTag);
       }
 
       // Default status to published
@@ -287,7 +300,8 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
     }
 
     if (filters.tag != null && filters.tag!.isNotEmpty) {
-      q = q.where('tags', arrayContains: filters.tag!.toLowerCase().trim());
+      final normalizedTag = normalizeTag(filters.tag);
+      q = q.where('tags', arrayContains: normalizedTag);
     }
 
     q = q.where('status', isEqualTo: 'published');

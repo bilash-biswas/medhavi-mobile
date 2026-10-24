@@ -7,6 +7,7 @@ import 'package:medhavi_mobile/core/utils/bengali_numeral_converter.dart';
 import 'package:medhavi_mobile/core/localization/app_strings.dart';
 import 'package:medhavi_mobile/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:medhavi_mobile/features/live_quiz/presentation/controllers/live_quiz_controller.dart';
+import 'package:medhavi_mobile/features/question_bank/data/datasources/question_remote_datasource.dart';
 import 'package:medhavi_mobile/features/question_bank/domain/entities/question_entity.dart';
 import 'package:medhavi_mobile/features/practice/presentation/controllers/practice_session_controller.dart';
 
@@ -36,6 +37,25 @@ void main() {
         BengaliNumeralConverter.toBengaliBcsTitle('39th-bcs-special'),
         '৩৯তম বিসিএস',
       );
+    });
+  });
+
+  group('QuestionRemoteDataSource normalizeTag Tests', () {
+    test('normalizes hyphenated batch tags to Firestore array-contains tags', () {
+      expect(QuestionRemoteDataSourceImpl.normalizeTag('50th-bcs'), '50thbcs-bcs');
+      expect(QuestionRemoteDataSourceImpl.normalizeTag('49th-bcs'), '49thbcs-bcs');
+      expect(QuestionRemoteDataSourceImpl.normalizeTag('42nd-bcs'), '42ndbcs-bcs');
+      expect(QuestionRemoteDataSourceImpl.normalizeTag('21st-bcs'), '21stbcs-bcs');
+      expect(QuestionRemoteDataSourceImpl.normalizeTag('23rd-bcs'), '23rdbcs-bcs');
+      expect(QuestionRemoteDataSourceImpl.normalizeTag('10th-bcs'), '10thbcs-bcs');
+    });
+
+    test('preserves already normalized or non-batch tags', () {
+      expect(QuestionRemoteDataSourceImpl.normalizeTag('50thbcs-bcs'), '50thbcs-bcs');
+      expect(QuestionRemoteDataSourceImpl.normalizeTag('bangla'), 'bangla');
+      expect(QuestionRemoteDataSourceImpl.normalizeTag('bcs'), 'bcs');
+      expect(QuestionRemoteDataSourceImpl.normalizeTag(null), isNull);
+      expect(QuestionRemoteDataSourceImpl.normalizeTag(''), isNull);
     });
   });
 
