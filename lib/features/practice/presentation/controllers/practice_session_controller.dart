@@ -293,6 +293,78 @@ class PracticeSessionController extends Notifier<PracticeSessionState> {
     }
 
     state = state.copyWith(isCompleted: true);
+    _updateUserStreakAndStats();
+  }
+
+  /// Updates user's continuous practice streak & counters in Firestore
+  Future<void> _updateUserStreakAndStats() async {
+    final user = ref.read(currentUserProvider);
+    if (user == null || user.isAnonymous) return;
+
+    final answeredCount = state.selectedAnswers.length;
+    if (answeredCount == 0) return;
+
+    int correctCount = 0;
+    for (final q in state.questions) {
+      final selected = state.selectedAnswers[q.id];
+      if (selected != null && selected == q.correctOptionId) {
+        correctCount++;
+      }
+    }
+
+    try {
+      final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      final snap = await userRef.get();
+      final data = snap.data() ?? {};
+
+      final now = DateTime.now();
+      final todayStr =
+          '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+      final rawCurrent = data['currentStreak'] ?? data['streak'] ?? 0;
+      final storedCurrent =
+          rawCurrent is num ? rawCurrent.toInt() : int.tryParse('$rawCurrent') ?? 0;
+
+      final rawLongest = data['longestStreak'] ?? 0;
+      final storedLongest =
+          rawLongest is num ? rawLongest.toInt() : int.tryParse('$rawLongest') ?? 0;
+
+      final lastPracticeDate = data['lastPracticeDate'] as String?;
+
+      int nextStreak = 1;
+      if (lastPracticeDate != null && lastPracticeDate.trim().isNotEmpty) {
+        if (lastPracticeDate.trim() == todayStr) {
+          nextStreak = storedCurrent < 1 ? 1 : storedCurrent;
+        } else {
+          final parsedLast =
+              DateTime.tryParse('${lastPracticeDate.trim()}T00:00:00Z');
+          if (parsedLast != null) {
+            final todayUtc = DateTime.utc(now.year, now.month, now.day);
+            final diffDays = todayUtc.difference(parsedLast).inDays;
+            if (diffDays == 1) {
+              nextStreak = (storedCurrent < 0 ? 0 : storedCurrent) + 1;
+            } else {
+              // Gap of 2+ days -> streak had dropped to 0, starts fresh at 1 today
+              nextStreak = 1;
+            }
+          }
+        }
+      }
+
+      final nextLongest = nextStreak > storedLongest ? nextStreak : storedLongest;
+
+      await userRef.set({
+        'currentStreak': nextStreak,
+        'longestStreak': nextLongest,
+        'lastPracticeDate': todayStr,
+        'totalAttempts': FieldValue.increment(1),
+        'totalQuestionsAnswered': FieldValue.increment(answeredCount),
+        'totalCorrect': FieldValue.increment(correctCount),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Notice: Could not update user streak in Firestore: $e');
+    }
   }
 
   /// Restart current session

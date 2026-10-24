@@ -191,10 +191,18 @@ class NotificationsController extends Notifier<NotificationsState> {
         if (doc.exists) {
           final data = doc.data() ?? {};
           final rawStreak = data['currentStreak'] ?? data['streak'] ?? 0;
-          final parsedStreak =
+          final storedStreak =
               rawStreak is num ? rawStreak.toInt() : int.tryParse('$rawStreak') ?? 0;
-          if (parsedStreak != state.userStreak) {
-            state = state.copyWith(userStreak: parsedStreak);
+          final lastPracticeDate = data['lastPracticeDate'] as String?;
+
+          final effectiveStreak = _evaluateEffectiveStreak(
+            storedStreak: storedStreak,
+            lastPracticeDate: lastPracticeDate,
+            uid: currentUser.uid,
+          );
+
+          if (effectiveStreak != state.userStreak) {
+            state = state.copyWith(userStreak: effectiveStreak);
           }
         }
       });
@@ -251,6 +259,56 @@ class NotificationsController extends Notifier<NotificationsState> {
       debugPrint('Firestore notifications stream error: $err');
       state = state.copyWith(isLoading: false);
     });
+  }
+
+  int _evaluateEffectiveStreak({
+    required int storedStreak,
+    required String? lastPracticeDate,
+    required String uid,
+  }) {
+    final safeStored = storedStreak < 0 ? 0 : storedStreak;
+    if (lastPracticeDate == null || lastPracticeDate.trim().isEmpty) {
+      if (safeStored > 0) {
+        _resetExpiredStreakInFirestore(uid);
+      }
+      return 0;
+    }
+
+    final parsedLast = DateTime.tryParse('${lastPracticeDate.trim()}T00:00:00Z');
+    if (parsedLast == null) {
+      if (safeStored > 0) {
+        _resetExpiredStreakInFirestore(uid);
+      }
+      return 0;
+    }
+
+    final now = DateTime.now();
+    final todayUtc = DateTime.utc(now.year, now.month, now.day);
+    final diffDays = todayUtc.difference(parsedLast).inDays;
+
+    if (diffDays <= 0) {
+      return safeStored < 1 ? 1 : safeStored;
+    }
+    if (diffDays == 1) {
+      return safeStored;
+    }
+
+    // diffDays >= 2: missed 1+ full calendar days -> streak resets to 0
+    if (safeStored > 0) {
+      _resetExpiredStreakInFirestore(uid);
+    }
+    return 0;
+  }
+
+  Future<void> _resetExpiredStreakInFirestore(String uid) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'currentStreak': 0,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      debugPrint('Could not reset expired streak in Firestore: $e');
+    }
   }
 
   Future<void> _triggerNativeAndroidNotification(
