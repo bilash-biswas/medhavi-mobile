@@ -56,6 +56,7 @@ void main() {
           {'id': 'opt_4', 'text': '25'},
         ],
         'tags': ['46th-bcs', 'algebra'],
+        'adminVerified': true,
       };
 
       final q = QuestionEntity.fromFirestore('q_test_1', mockData);
@@ -66,6 +67,7 @@ void main() {
       expect(q.options.length, 4);
       expect(q.options[1].id, 'opt_2');
       expect(q.source, '46th-bcs');
+      expect(q.adminVerified, isTrue);
     });
   });
 

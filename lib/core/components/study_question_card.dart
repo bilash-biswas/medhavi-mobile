@@ -249,6 +249,40 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
                     // Difficulty Badge
                     _buildDifficultyBadge(q.difficulty, isDark),
 
+                    // Admin Verified Badge
+                    if (q.adminVerified) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF064E3B) : const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFF059669) : const Color(0xFFA7F3D0),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              LucideIcons.shieldCheck,
+                              size: 11,
+                              color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              'ভেরিফাইড',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
                     const Spacer(),
 
                     // Remove Button (Optional for Bookmarks / Mistakes)

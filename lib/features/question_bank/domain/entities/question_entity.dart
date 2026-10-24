@@ -36,6 +36,7 @@ class QuestionEntity {
   final List<String> tags;
   final String? imageUrl;
   final String? textEn;
+  final bool adminVerified;
 
   const QuestionEntity({
     required this.id,
@@ -51,6 +52,7 @@ class QuestionEntity {
     this.tags = const [],
     this.imageUrl,
     this.textEn,
+    this.adminVerified = false,
   });
 
   /// Alias getter for question text
@@ -79,6 +81,7 @@ class QuestionEntity {
       tags: tags,
       imageUrl: data['imageUrl']?.toString(),
       textEn: data['textEn']?.toString(),
+      adminVerified: data['adminVerified'] == true,
     );
   }
 
@@ -96,6 +99,7 @@ class QuestionEntity {
       'tags': tags,
       'imageUrl': imageUrl,
       'textEn': textEn,
+      'adminVerified': adminVerified,
     };
   }
 }
