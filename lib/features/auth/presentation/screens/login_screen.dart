@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/components/google_sign_in_button.dart';
+import '../../../../core/localization/app_strings.dart';
+import '../../../../core/localization/locale_controller.dart';
 import '../controllers/auth_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -282,6 +284,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             }
           },
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: TextButton(
+              onPressed: () {
+                ref.read(localeControllerProvider.notifier).toggleLocale();
+              },
+              child: Text(
+                AppStrings.isBn(ref) ? 'EN' : 'বাং',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Center(
@@ -320,7 +336,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: 16),
 
                   Text(
-                    'মেধাবী',
+                    AppStrings.t(ref, 'মেধাবী', 'Medhavi'),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.hindSiliguri(
                       fontSize: 32,
@@ -333,7 +349,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: 6),
 
                   Text(
-                    'আপনার বিসিএস ও ক্যারিয়ার প্রস্তুতি অব্যাহত রাখতে সাইন ইন করুন',
+                    AppStrings.t(
+                      ref,
+                      'আপনার বিসিএস ও ক্যারিয়ার প্রস্তুতি অব্যাহত রাখতে সাইন ইন করুন',
+                      'Sign in to continue your BCS & career preparation',
+                    ),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.hindSiliguri(
                       fontSize: 13,
@@ -384,7 +404,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   // 3. Email Input
                   Text(
-                    'ইমেইল ঠিকানা',
+                    AppStrings.t(ref, 'ইমেইল ঠিকানা', 'Email Address'),
                     style: GoogleFonts.hindSiliguri(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -425,11 +445,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     validator: (val) {
                       if (val == null || val.trim().isEmpty) {
-                        return 'ইমেইল ঠিকানা লিখুন';
+                        return AppStrings.t(ref, 'ইমেইল ঠিকানা লিখুন', 'Enter your email address');
                       }
                       if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
                           .hasMatch(val.trim())) {
-                        return 'সঠিক ইমেইল ফরম্যাট দিন';
+                        return AppStrings.t(ref, 'সঠিক ইমেইল ফরম্যাট দিন', 'Enter a valid email format');
                       }
                       return null;
                     },
@@ -441,7 +461,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'পাসওয়ার্ড',
+                        AppStrings.t(ref, 'পাসওয়ার্ড', 'Password'),
                         style: GoogleFonts.hindSiliguri(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -451,7 +471,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       GestureDetector(
                         onTap: _showForgotPasswordDialog,
                         child: Text(
-                          'পাসওয়ার্ড ভুলে গেছেন?',
+                          AppStrings.t(ref, 'পাসওয়ার্ড ভুলে গেছেন?', 'Forgot Password?'),
                           style: GoogleFonts.hindSiliguri(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -506,10 +526,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     validator: (val) {
                       if (val == null || val.isEmpty) {
-                        return 'পাসওয়ার্ড লিখুন';
+                        return AppStrings.t(ref, 'পাসওয়ার্ড লিখুন', 'Enter your password');
                       }
                       if (val.length < 6) {
-                        return 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে';
+                        return AppStrings.t(ref, 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে', 'Password must be at least 6 characters');
                       }
                       return null;
                     },
@@ -559,7 +579,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     color: Colors.white, size: 18),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'লগইন করুন',
+                                  AppStrings.t(ref, 'লগইন করুন', 'Sign In'),
                                   style: GoogleFonts.hindSiliguri(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -583,7 +603,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
-                          'অথবা',
+                          AppStrings.t(ref, 'অথবা', 'OR'),
                           style: GoogleFonts.hindSiliguri(
                             fontSize: 13,
                             color: isDark
@@ -615,7 +635,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'অ্যাকাউন্ট নেই? ',
+                        AppStrings.t(ref, 'অ্যাকাউন্ট নেই? ', "Don't have an account? "),
                         style: GoogleFonts.hindSiliguri(
                           fontSize: 14,
                           color: isDark
@@ -628,7 +648,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           context.push('/register');
                         },
                         child: Text(
-                          'নতুন অ্যাকাউন্ট খুলুন',
+                          AppStrings.t(ref, 'নতুন অ্যাকাউন্ট খুলুন', 'Create New Account'),
                           style: GoogleFonts.hindSiliguri(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,

@@ -29,27 +29,35 @@ class LeaderboardScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            tooltip: 'নিয়মাবলী',
+            tooltip: AppStrings.t(ref, 'নিয়মাবলী', 'Scoring Rules'),
             icon: const Icon(LucideIcons.info),
             onPressed: () {
               showDialog(
                 context: context,
                 builder: (ctx) => AlertDialog(
                   title: Text(
-                    'লিডারবোর্ড স্কোরিং নিয়ম',
+                    AppStrings.t(
+                        ref, 'লিডারবোর্ড স্কোরিং নিয়ম', 'Leaderboard Scoring Rules'),
                     style: GoogleFonts.hindSiliguri(fontWeight: FontWeight.bold),
                   ),
                   content: Text(
-                    '১. প্রতিটি সঠিক উত্তরে ১০ পয়েন্ট যোগ হয়।\n'
-                    '২. লাইভ কুইজ ও মডেল টেস্টে ফুল স্কোর করলে বোনাস ১০০ পয়েন্ট।\n'
-                    '৩. প্রতিদিন অন্তত ৫টি প্রশ্ন অনুশীলন করলে স্ট্রিক অক্ষুণ্ণ থাকে।\n'
-                    '৪. ভুল প্রশ্ন পুনরায় সমাধান করলে ৫ পয়েন্ট অর্জিত হয়।',
+                    AppStrings.t(
+                      ref,
+                      '১. প্রতিটি সঠিক উত্তরে ১০ পয়েন্ট যোগ হয়।\n'
+                      '২. ধারাবাহিক স্ট্রিকের প্রতি দিনের জন্য ২০ পয়েন্ট বোনাস।\n'
+                      '৩. একদিন অনুশীলন মিস করলেই স্ট্রিক ০ হয়ে যাবে।\n'
+                      '৪. ভুল প্রশ্ন পুনরায় সমাধান করলে অতিরিক্ত পয়েন্ট অর্জিত হয়।',
+                      '1. Earn 10 points for every correct answer.\n'
+                      '2. Earn +20 bonus points per active streak day.\n'
+                      '3. Missing 1 full calendar day resets your streak to 0.\n'
+                      '4. Rectifying mistakes boosts your overall mastery.',
+                    ),
                     style: GoogleFonts.hindSiliguri(height: 1.5),
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
-                      child: const Text('বুঝেছি'),
+                      child: Text(AppStrings.t(ref, 'বুঝেছি', 'Got It')),
                     ),
                   ],
                 ),
@@ -468,6 +476,7 @@ class _UserRankStickyBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isBn = Localizations.localeOf(context).languageCode != 'en';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
@@ -496,7 +505,9 @@ class _UserRankStickyBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                '#${BengaliNumeralConverter.toBengaliNumber(entry.rank)}',
+                isBn
+                    ? '#${BengaliNumeralConverter.toBengaliNumber(entry.rank)}'
+                    : '#${entry.rank}',
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -511,7 +522,7 @@ class _UserRankStickyBar extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'আপনার বর্তমান র‍্যাংক',
+                    isBn ? 'আপনার বর্তমান র‍্যাংক' : 'Your Current Rank',
                     style: GoogleFonts.hindSiliguri(
                       fontSize: 11,
                       color: isDark ? Colors.white70 : AppColors.textSecondaryLight,
@@ -532,7 +543,9 @@ class _UserRankStickyBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${BengaliNumeralConverter.toBengaliNumber(entry.score)} pts',
+                  isBn
+                      ? '${BengaliNumeralConverter.toBengaliNumber(entry.score)} pts'
+                      : '${entry.score} pts',
                   style: GoogleFonts.hindSiliguri(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
@@ -540,10 +553,13 @@ class _UserRankStickyBar extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'পরবর্তী র‍্যাংক: +১২০ pts',
+                  isBn
+                      ? '🔥 ${BengaliNumeralConverter.toBengaliNumber(entry.streakDays)} দিন স্ট্রিক'
+                      : '🔥 ${entry.streakDays}d Streak',
                   style: GoogleFonts.hindSiliguri(
                     fontSize: 10,
-                    color: Colors.amber,
+                    color: Colors.orange,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],

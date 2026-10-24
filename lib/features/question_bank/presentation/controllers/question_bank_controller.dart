@@ -27,6 +27,8 @@ class QuestionBankState {
   final String searchQuery;
   final bool autoRevealAll;
   final List<Map<String, dynamic>> subjects;
+  final Map<String, int> subjectCounts;
+  final int totalMatchingCount;
   final Set<String> bookmarkedIds;
   final Map<String, String> userAnswers;
   final String? errorMessage;
@@ -44,6 +46,8 @@ class QuestionBankState {
     this.searchQuery = '',
     this.autoRevealAll = false,
     this.subjects = const [],
+    this.subjectCounts = const {},
+    this.totalMatchingCount = 0,
     this.bookmarkedIds = const {},
     this.userAnswers = const {},
     this.errorMessage,
@@ -62,6 +66,8 @@ class QuestionBankState {
     String? searchQuery,
     bool? autoRevealAll,
     List<Map<String, dynamic>>? subjects,
+    Map<String, int>? subjectCounts,
+    int? totalMatchingCount,
     Set<String>? bookmarkedIds,
     Map<String, String>? userAnswers,
     String? errorMessage,
@@ -79,6 +85,8 @@ class QuestionBankState {
       searchQuery: searchQuery ?? this.searchQuery,
       autoRevealAll: autoRevealAll ?? this.autoRevealAll,
       subjects: subjects ?? this.subjects,
+      subjectCounts: subjectCounts ?? this.subjectCounts,
+      totalMatchingCount: totalMatchingCount ?? this.totalMatchingCount,
       bookmarkedIds: bookmarkedIds ?? this.bookmarkedIds,
       userAnswers: userAnswers ?? this.userAnswers,
       errorMessage: errorMessage,
@@ -114,8 +122,10 @@ class QuestionBankController extends Notifier<QuestionBankState> {
   Future<void> init() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      // 1. Fetch BCS subjects
-      final subjects = await _dataSource.getSubjects(examId: state.selectedExamId);
+      // 1. Fetch BCS subjects & counts in parallel
+      final subjectsFuture = _dataSource.getSubjects(examId: state.selectedExamId);
+      final countsFuture =
+          _dataSource.getSubjectQuestionCounts(examId: state.selectedExamId);
 
       // 2. Fetch bookmarks and recorded answers if user is logged in
       final user = ref.read(currentUserProvider);
@@ -127,8 +137,13 @@ class QuestionBankController extends Notifier<QuestionBankState> {
         answers = await _bookmarksDataSource.getUserRecordedAnswers(user.uid);
       }
 
+      final subjects = await subjectsFuture;
+      final subjectCounts = await countsFuture;
+
       state = state.copyWith(
         subjects: subjects,
+        subjectCounts: subjectCounts,
+        totalMatchingCount: subjectCounts['all'] ?? 0,
         bookmarkedIds: bookmarks,
         userAnswers: answers,
       );
@@ -144,21 +159,30 @@ class QuestionBankController extends Notifier<QuestionBankState> {
   Future<void> loadInitialQuestions() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final result = await _dataSource.getQuestions(
-        filters: QuestionFilterParams(
-          examId: state.selectedExamId,
-          subjectId: state.selectedSubjectId,
-          tag: state.selectedBatchTag,
-          difficulty: state.selectedDifficulty,
-        ),
-        pageSize: 20,
+      final filterParams = QuestionFilterParams(
+        examId: state.selectedExamId,
+        subjectId: state.selectedSubjectId,
+        tag: state.selectedBatchTag,
+        difficulty: state.selectedDifficulty,
       );
 
+      final results = await Future.wait([
+        _dataSource.getQuestions(
+          filters: filterParams,
+          pageSize: 20,
+        ),
+        _dataSource.getQuestionCount(filterParams),
+      ]);
+
+      final result = results[0] as PaginatedQuestionsResult;
+      final totalCount = results[1] as int;
+
       debugPrint(
-          'Loaded ${result.questions.length} questions (hasMore: ${result.hasMore})');
+          'Loaded ${result.questions.length} / $totalCount questions (hasMore: ${result.hasMore})');
 
       state = state.copyWith(
         questions: result.questions,
+        totalMatchingCount: totalCount > 0 ? totalCount : result.questions.length,
         lastDoc: result.lastDoc,
         hasMore: result.hasMore,
         isLoading: false,

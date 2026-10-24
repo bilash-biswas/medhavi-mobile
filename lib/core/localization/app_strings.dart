@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../utils/bengali_numeral_converter.dart';
 import 'locale_controller.dart';
 
 class AppStrings {
@@ -209,5 +210,21 @@ class AppStrings {
     return _localizedValues[lang]?[key] ??
         _localizedValues['bn']?[key] ??
         key;
+  }
+
+  /// Returns true if current app language is Bengali ('bn')
+  static bool isBn(WidgetRef ref) {
+    return ref.watch(localeControllerProvider).languageCode == 'bn';
+  }
+
+  /// Inline bilingual translation helper: returns [bn] when Bengali is active, [en] when English is active.
+  static String t(WidgetRef ref, String bn, String en) {
+    return isBn(ref) ? bn : en;
+  }
+
+  /// Formats number into Bengali numerals when 'bn' is active, or ASCII digits when 'en' is active.
+  static String num(WidgetRef ref, dynamic value) {
+    final raw = '$value';
+    return isBn(ref) ? BengaliNumeralConverter.toBengali(raw) : raw;
   }
 }

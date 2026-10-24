@@ -5,9 +5,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:medhavi_mobile/core/constants/app_colors.dart';
 import 'package:medhavi_mobile/core/components/auto_hide_app_bar.dart';
-import 'package:medhavi_mobile/core/utils/bengali_numeral_converter.dart';
+import 'package:medhavi_mobile/core/localization/app_strings.dart';
 import 'package:medhavi_mobile/features/practice/presentation/controllers/practice_session_controller.dart';
 import 'package:medhavi_mobile/features/question_bank/presentation/controllers/question_bank_controller.dart';
+import 'package:medhavi_mobile/features/question_bank/presentation/screens/question_bank_screen.dart'
+    show kBcsBatches;
 import 'package:medhavi_mobile/features/bookmarks/presentation/controllers/bookmarks_controller.dart';
 import 'package:medhavi_mobile/features/mistakes/presentation/controllers/mistakes_controller.dart';
 
@@ -16,7 +18,7 @@ const List<Map<String, dynamic>> _kDefaultBcsSubjects = [
     'id': 'sub_bcs_bangla',
     'name': 'বাংলা ভাষা ও সাহিত্য',
     'nameEn': 'Bengali Language & Literature',
-    'marks': '৩৫',
+    'marks': '35',
     'icon': LucideIcons.bookOpen,
     'color': Color(0xFF4F46E5),
   },
@@ -24,7 +26,7 @@ const List<Map<String, dynamic>> _kDefaultBcsSubjects = [
     'id': 'sub_bcs_english',
     'name': 'English Language & Literature',
     'nameEn': 'English Language & Literature',
-    'marks': '৩৫',
+    'marks': '35',
     'icon': LucideIcons.languages,
     'color': Color(0xFF0284C7),
   },
@@ -32,7 +34,7 @@ const List<Map<String, dynamic>> _kDefaultBcsSubjects = [
     'id': 'sub_bcs_bd_affairs',
     'name': 'বাংলাদেশ বিষয়াবলি',
     'nameEn': 'Bangladesh Affairs',
-    'marks': '৩০',
+    'marks': '30',
     'icon': LucideIcons.landmark,
     'color': Color(0xFF16A34A),
   },
@@ -40,7 +42,7 @@ const List<Map<String, dynamic>> _kDefaultBcsSubjects = [
     'id': 'sub_bcs_intl_affairs',
     'name': 'আন্তর্জাতিক বিষয়াবলি',
     'nameEn': 'International Affairs',
-    'marks': '২০',
+    'marks': '20',
     'icon': LucideIcons.globe,
     'color': Color(0xFFD97706),
   },
@@ -48,7 +50,7 @@ const List<Map<String, dynamic>> _kDefaultBcsSubjects = [
     'id': 'sub_bcs_math',
     'name': 'গাণিতিক যুক্তি (Mathematics)',
     'nameEn': 'Mathematical Reasoning',
-    'marks': '১৫',
+    'marks': '15',
     'icon': LucideIcons.calculator,
     'color': Color(0xFF9333EA),
   },
@@ -56,7 +58,7 @@ const List<Map<String, dynamic>> _kDefaultBcsSubjects = [
     'id': 'sub_bcs_mental_ability',
     'name': 'মানসিক দক্ষতা',
     'nameEn': 'Mental Ability',
-    'marks': '১৫',
+    'marks': '15',
     'icon': LucideIcons.brain,
     'color': Color(0xFFEA580C),
   },
@@ -64,7 +66,7 @@ const List<Map<String, dynamic>> _kDefaultBcsSubjects = [
     'id': 'sub_bcs_science',
     'name': 'সাধারণ বিজ্ঞান',
     'nameEn': 'General Science',
-    'marks': '১৫',
+    'marks': '15',
     'icon': LucideIcons.flaskConical,
     'color': Color(0xFF0D9488),
   },
@@ -72,7 +74,7 @@ const List<Map<String, dynamic>> _kDefaultBcsSubjects = [
     'id': 'sub_bcs_ict',
     'name': 'তথ্য ও যোগাযোগ প্রযুক্তি (ICT)',
     'nameEn': 'Computer & ICT',
-    'marks': '১৫',
+    'marks': '15',
     'icon': LucideIcons.cpu,
     'color': Color(0xFF2563EB),
   },
@@ -80,7 +82,7 @@ const List<Map<String, dynamic>> _kDefaultBcsSubjects = [
     'id': 'sub_bcs_geography',
     'name': 'ভূগোল, পরিবেশ ও দুর্যোগ ব্যবস্থাপনা',
     'nameEn': 'Geography & Environment',
-    'marks': '১০',
+    'marks': '10',
     'icon': LucideIcons.mapPin,
     'color': Color(0xFF059669),
   },
@@ -88,7 +90,7 @@ const List<Map<String, dynamic>> _kDefaultBcsSubjects = [
     'id': 'sub_bcs_ethics',
     'name': 'নৈতিকতা, মূল্যবোধ ও সুশাসন',
     'nameEn': 'Ethics, Values & Governance',
-    'marks': '১০',
+    'marks': '10',
     'icon': LucideIcons.scale,
     'color': Color(0xFFDC2626),
   },
@@ -97,7 +99,12 @@ const List<Map<String, dynamic>> _kDefaultBcsSubjects = [
 class _PracticeConfig {
   final PracticeMode mode;
   final int questionCount;
-  const _PracticeConfig({required this.mode, required this.questionCount});
+  final String batchTag;
+  const _PracticeConfig({
+    required this.mode,
+    required this.questionCount,
+    this.batchTag = '',
+  });
 }
 
 class PracticeHubScreen extends ConsumerWidget {
@@ -129,7 +136,7 @@ class PracticeHubScreen extends ConsumerWidget {
       ref.read(practiceSessionControllerProvider.notifier).startPractice(
             title: title,
             subjectId: subjectId,
-            batchTag: batchTag,
+            batchTag: config.batchTag.isNotEmpty ? config.batchTag : batchTag,
             mode: config.mode,
             questionCount: config.questionCount,
           );
@@ -140,6 +147,7 @@ class PracticeHubScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isBn = AppStrings.isBn(ref);
     final qbState = ref.watch(questionBankControllerProvider);
     final bmState = ref.watch(bookmarksControllerProvider);
     final mbState = ref.watch(mistakesControllerProvider);
@@ -162,22 +170,31 @@ class PracticeHubScreen extends ConsumerWidget {
                     color: AppColors.emerald, size: 20),
               ),
               const SizedBox(width: 10),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'অনুশীলন হাব (Practice Hub)',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    'ইন্টারেক্টিভ কুইজ ও বিষয়ভিত্তিক প্র্যাকটিস',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondaryLight,
-                      fontWeight: FontWeight.normal,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppStrings.t(
+                          ref, 'অনুশীলন হাব (Practice Hub)', 'Practice Hub'),
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                  ),
-                ],
+                    Text(
+                      AppStrings.t(
+                        ref,
+                        'ইন্টারেক্টিভ কুইজ ও বিষয়ভিত্তিক প্র্যাকটিস',
+                        'Interactive quizzes & subject-wise practice',
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondaryLight,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -194,7 +211,8 @@ class PracticeHubScreen extends ConsumerWidget {
                 _openPracticeConfigModal(
                   context: context,
                   ref: ref,
-                  title: 'দ্রুত ২০টি বিসিএস প্রিলি প্রশ্ন',
+                  title: AppStrings.t(ref, 'দ্রুত ২০টি বিসিএস প্রিলি প্রশ্ন',
+                      'Quick 20 BCS Preliminary MCQs'),
                 );
               },
               child: Container(
@@ -230,18 +248,22 @@ class PracticeHubScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Row(
+                          Row(
                             children: [
-                              Text(
-                                'র‍্যান্ডম বিসিএস প্র্যাকটিস',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                              Flexible(
+                                child: Text(
+                                  AppStrings.t(ref, 'র‍্যান্ডম বিসিএস প্র্যাকটিস',
+                                      'Random BCS Practice'),
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
-                              SizedBox(width: 6),
-                              Text(
+                              const SizedBox(width: 6),
+                              const Text(
                                 '• QUICK',
                                 style: TextStyle(
                                   color: Colors.amber,
@@ -253,7 +275,11 @@ class PracticeHubScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            'সকল বিষয় থেকে নির্বাচিত প্রশ্নে তাত্ক্ষণিক কুইজ শুরু করুন',
+                            AppStrings.t(
+                              ref,
+                              'সকল বিষয় ও ১০ম-৫০তম বিসিএস থেকে নির্বাচিত প্রশ্নে কুইজ শুরু করুন',
+                              'Start a custom quiz across all subjects & 10th-50th BCS batches',
+                            ),
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.white.withValues(alpha: 0.9),
@@ -306,18 +332,22 @@ class PracticeHubScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Row(
+                          Row(
                             children: [
-                              Text(
-                                'লাইভ মেগা মডেল টেস্ট',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                              Flexible(
+                                child: Text(
+                                  AppStrings.t(ref, 'লাইভ মেগা মডেল টেস্ট',
+                                      'Live Mega Model Test'),
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
-                              SizedBox(width: 6),
-                              Text(
+                              const SizedBox(width: 6),
+                              const Text(
                                 '• LIVE',
                                 style: TextStyle(
                                   color: Colors.amber,
@@ -329,7 +359,11 @@ class PracticeHubScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'টাইমার ও নেগেটিভ মার্কিং সহ রিয়েল বিসিএস প্রিলি সিমুলেশন',
+                            AppStrings.t(
+                              ref,
+                              'টাইমার ও নেগেটিভ মার্কিং সহ রিয়েল বিসিএস প্রিলি সিমুলেশন',
+                              'Real BCS Preliminary simulation with timer & negative marking',
+                            ),
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.white.withValues(alpha: 0.9),
@@ -351,18 +385,26 @@ class PracticeHubScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: _QuickModeCard(
-                    title: 'ভুল প্রশ্ন ড্রিল',
-                    countText:
-                        '${BengaliNumeralConverter.toBengali('${mbState.questions.length}')}টি ভুল প্রশ্ন',
-                    badge: 'উচ্চ অগ্রাধিকার',
+                    title: AppStrings.t(
+                        ref, 'ভুল প্রশ্ন ড্রিল', 'Mistakes Drill'),
+                    countText: isBn
+                        ? '${AppStrings.num(ref, mbState.questions.length)}টি ভুল প্রশ্ন'
+                        : '${mbState.questions.length} Mistakes',
+                    badge: AppStrings.t(
+                        ref, 'উচ্চ অগ্রাধিকার', 'High Priority'),
                     icon: LucideIcons.alertTriangle,
                     color: AppColors.rose,
                     onTap: () {
                       if (mbState.questions.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Text(
-                                'ভুল ব্যাংকে কোনো প্রশ্ন নেই। টেস্টে ভুল হলে তা স্বয়ংক্রিয়ভাবে এখানে জমা হবে।'),
+                              AppStrings.t(
+                                ref,
+                                'ভুল ব্যাংকে কোনো প্রশ্ন নেই। টেস্টে ভুল হলে তা স্বয়ংক্রিয়ভাবে এখানে জমা হবে।',
+                                'No questions in your Mistake Bank yet.',
+                              ),
+                            ),
                           ),
                         );
                         return;
@@ -370,7 +412,8 @@ class PracticeHubScreen extends ConsumerWidget {
                       ref
                           .read(practiceSessionControllerProvider.notifier)
                           .startPractice(
-                            title: 'ভুল প্রশ্ন সংশোধন ড্রিল',
+                            title: AppStrings.t(ref, 'ভুল প্রশ্ন সংশোধন ড্রিল',
+                                'Mistake Recovery Drill'),
                             preloadedQuestions: mbState.questions,
                             mode: PracticeMode.instant,
                           );
@@ -381,18 +424,26 @@ class PracticeHubScreen extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _QuickModeCard(
-                    title: 'বুকমার্ক টেস্ট',
-                    countText:
-                        '${BengaliNumeralConverter.toBengali('${bmState.questions.length}')}টি সংরক্ষিত',
-                    badge: 'ব্যক্তিগত রিভিশন',
+                    title: AppStrings.t(
+                        ref, 'বুকমার্ক টেস্ট', 'Bookmarks Drill'),
+                    countText: isBn
+                        ? '${AppStrings.num(ref, bmState.questions.length)}টি সংরক্ষিত'
+                        : '${bmState.questions.length} Saved',
+                    badge: AppStrings.t(
+                        ref, 'ব্যক্তিগত রিভিশন', 'Saved Revision'),
                     icon: LucideIcons.bookmark,
                     color: AppColors.amber,
                     onTap: () {
                       if (bmState.questions.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Text(
-                                'আপনার কোনো বুকমার্ক করা প্রশ্ন নেই। প্রশ্ন ব্যাংক থেকে বুকমার্ক করুন।'),
+                              AppStrings.t(
+                                ref,
+                                'আপনার কোনো বুকমার্ক করা প্রশ্ন নেই। প্রশ্ন ব্যাংক থেকে বুকমার্ক করুন।',
+                                'No bookmarked questions yet. Bookmark questions from the Question Bank.',
+                              ),
+                            ),
                           ),
                         );
                         return;
@@ -400,7 +451,10 @@ class PracticeHubScreen extends ConsumerWidget {
                       ref
                           .read(practiceSessionControllerProvider.notifier)
                           .startPractice(
-                            title: 'বুকমার্ক করা প্রশ্ন অনুশীলন',
+                            title: AppStrings.t(
+                                ref,
+                                'বুকমার্ক করা প্রশ্ন অনুশীলন',
+                                'Bookmarked Questions Drill'),
                             preloadedQuestions: bmState.questions,
                             mode: PracticeMode.instant,
                           );
@@ -416,9 +470,10 @@ class PracticeHubScreen extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'বিষয়ভিত্তিক অনুশীলন',
-                  style: TextStyle(
+                Text(
+                  AppStrings.t(
+                      ref, 'বিষয়ভিত্তিক অনুশীলন', 'Subject-wise Practice'),
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -426,8 +481,10 @@ class PracticeHubScreen extends ConsumerWidget {
                 TextButton.icon(
                   onPressed: () => context.go('/question-bank'),
                   icon: const Icon(LucideIcons.bookOpen, size: 14),
-                  label: const Text('প্রশ্ন ব্যাংক ব্রাউজ',
-                      style: TextStyle(fontSize: 12)),
+                  label: Text(
+                    AppStrings.t(ref, 'প্রশ্ন ব্যাংক ব্রাউজ', 'Browse Bank'),
+                    style: const TextStyle(fontSize: 12),
+                  ),
                 ),
               ],
             ),
@@ -440,12 +497,25 @@ class PracticeHubScreen extends ConsumerWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final sub = subjects[index];
+                final defaultMeta = _kDefaultBcsSubjects.firstWhere(
+                  (d) => d['id'] == sub['id'],
+                  orElse: () => _kDefaultBcsSubjects[index % _kDefaultBcsSubjects.length],
+                );
                 final name = sub['name'] as String? ?? '';
-                final nameEn = sub['nameEn'] as String? ?? '';
+                final nameEn = (sub['nameEn'] as String?)?.isNotEmpty == true
+                    ? sub['nameEn'] as String
+                    : (defaultMeta['nameEn'] as String? ?? '');
                 final subId = sub['id'] as String? ?? '';
-                final marks = sub['marks']?.toString() ?? '১৫';
-                final icon = (sub['icon'] as IconData?) ?? LucideIcons.fileText;
-                final color = (sub['color'] as Color?) ?? AppColors.primary;
+                final marks =
+                    sub['marks']?.toString() ?? defaultMeta['marks'].toString();
+                final icon = (sub['icon'] as IconData?) ??
+                    (defaultMeta['icon'] as IconData?) ??
+                    LucideIcons.fileText;
+                final color = (sub['color'] as Color?) ??
+                    (defaultMeta['color'] as Color?) ??
+                    AppColors.primary;
+                final count = qbState.subjectCounts[subId] ?? 0;
+                final displayTitle = isBn ? name : nameEn;
 
                 return Card(
                   child: InkWell(
@@ -454,7 +524,9 @@ class PracticeHubScreen extends ConsumerWidget {
                       _openPracticeConfigModal(
                         context: context,
                         ref: ref,
-                        title: '$name অনুশীলন',
+                        title: isBn
+                            ? '$name অনুশীলন'
+                            : '$nameEn Practice',
                         subjectId: subId,
                       );
                     },
@@ -477,7 +549,7 @@ class PracticeHubScreen extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  name,
+                                  displayTitle,
                                   style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
@@ -485,7 +557,9 @@ class PracticeHubScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  '$nameEn • বিসিএস প্রিলি মান: $marks',
+                                  isBn
+                                      ? '${count > 0 ? '${AppStrings.num(ref, count)}টি প্রশ্ন • ' : ''}বিসিএস প্রিলি মান: ${AppStrings.num(ref, marks)}'
+                                      : '${count > 0 ? '$count MCQs • ' : ''}BCS Marks: $marks',
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: isDark
@@ -507,14 +581,18 @@ class PracticeHubScreen extends ConsumerWidget {
                               ),
                             ),
                             icon: const Icon(LucideIcons.play, size: 12),
-                            label: const Text('শুরু করুন',
-                                style: TextStyle(
-                                    fontSize: 12, fontWeight: FontWeight.bold)),
+                            label: Text(
+                              AppStrings.t(ref, 'শুরু করুন', 'Start'),
+                              style: const TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
                             onPressed: () {
                               _openPracticeConfigModal(
                                 context: context,
                                 ref: ref,
-                                title: '$name অনুশীলন',
+                                title: isBn
+                                    ? '$name অনুশীলন'
+                                    : '$nameEn Practice',
                                 subjectId: subId,
                               );
                             },
@@ -631,10 +709,18 @@ class __PracticeSetupBottomSheetState
     extends ConsumerState<_PracticeSetupBottomSheet> {
   int _questionCount = 20;
   PracticeMode _mode = PracticeMode.instant;
+  late String _selectedBatchTag;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedBatchTag = widget.batchTag ?? '';
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isBn = AppStrings.isBn(ref);
 
     return SafeArea(
       child: Padding(
@@ -658,9 +744,14 @@ class __PracticeSetupBottomSheetState
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const Text(
-                        'অনুশীলনের মোড ও প্রশ্নের সংখ্যা নির্ধারণ করুন',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      Text(
+                        AppStrings.t(
+                          ref,
+                          'অনুশীলনের ব্যাচ, মোড ও প্রশ্নের সংখ্যা নির্ধারণ করুন',
+                          'Select BCS batch, mode, and question count',
+                        ),
+                        style:
+                            const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ],
                   ),
@@ -671,22 +762,61 @@ class __PracticeSetupBottomSheetState
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+
+            // BCS Batch Selector (10th to 50th BCS)
+            Text(
+              AppStrings.t(
+                  ref, 'বিসিএস ব্যাচ (১০ম - ৫০তম)', 'BCS Batch (10th - 50th)'),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              value: _selectedBatchTag,
+              isExpanded: true,
+              decoration: InputDecoration(
+                isDense: true,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              items: kBcsBatches.map((b) {
+                final id = b['id'] ?? '';
+                final label = isBn
+                    ? (b['labelBn'] ?? b['label']!)
+                    : (b['labelEn'] ?? b['label']!);
+                return DropdownMenuItem<String>(
+                  value: id,
+                  child: Text(
+                    label,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                );
+              }).toList(),
+              onChanged: (val) {
+                setState(() => _selectedBatchTag = val ?? '');
+              },
+            ),
+            const SizedBox(height: 16),
 
             // Question Count
-            const Text(
-              'প্রশ্নের সংখ্যা',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+            Text(
+              AppStrings.t(ref, 'প্রশ্নের সংখ্যা', 'Question Count'),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Row(
-              children: [10, 20, 30].map((count) {
+              children: [10, 20, 30, 50].map((count) {
                 final isSelected = _questionCount == count;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ChoiceChip(
                     label: Text(
-                      '${BengaliNumeralConverter.toBengali('$count')}টি প্রশ্ন',
+                      isBn
+                          ? '${AppStrings.num(ref, count)}টি প্রশ্ন'
+                          : '$count Qs',
                       style: TextStyle(
                         fontWeight:
                             isSelected ? FontWeight.bold : FontWeight.normal,
@@ -700,12 +830,12 @@ class __PracticeSetupBottomSheetState
                 );
               }).toList(),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             // Mode Selector
-            const Text(
-              'অনুশীলন মোড',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+            Text(
+              AppStrings.t(ref, 'অনুশীলন মোড', 'Practice Mode'),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             Row(
@@ -721,7 +851,9 @@ class __PracticeSetupBottomSheetState
                       decoration: BoxDecoration(
                         color: _mode == PracticeMode.instant
                             ? AppColors.primary.withValues(alpha: 0.12)
-                            : (isDark ? AppColors.cardDark : Colors.grey.shade100),
+                            : (isDark
+                                ? AppColors.cardDark
+                                : Colors.grey.shade100),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: _mode == PracticeMode.instant
@@ -741,16 +873,21 @@ class __PracticeSetupBottomSheetState
                                 : Colors.grey,
                           ),
                           const SizedBox(height: 8),
-                          const Text(
-                            'শিখন মোড',
-                            style: TextStyle(
+                          Text(
+                            AppStrings.t(ref, 'শিখন মোড', 'Study Mode'),
+                            style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const Text(
-                            'প্রতিটি উত্তরের পর সাথে সাথে বিশদ ব্যাখ্যা',
-                            style: TextStyle(fontSize: 10, color: Colors.grey),
+                          Text(
+                            AppStrings.t(
+                              ref,
+                              'প্রতিটি উত্তরের পর সাথে সাথে বিশদ ব্যাখ্যা',
+                              'Instant answer & explanation after each pick',
+                            ),
+                            style: const TextStyle(
+                                fontSize: 10, color: Colors.grey),
                           ),
                         ],
                       ),
@@ -769,7 +906,9 @@ class __PracticeSetupBottomSheetState
                       decoration: BoxDecoration(
                         color: _mode == PracticeMode.exam
                             ? AppColors.rose.withValues(alpha: 0.12)
-                            : (isDark ? AppColors.cardDark : Colors.grey.shade100),
+                            : (isDark
+                                ? AppColors.cardDark
+                                : Colors.grey.shade100),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: _mode == PracticeMode.exam
@@ -789,16 +928,21 @@ class __PracticeSetupBottomSheetState
                                 : Colors.grey,
                           ),
                           const SizedBox(height: 8),
-                          const Text(
-                            'মডেল টেস্ট',
-                            style: TextStyle(
+                          Text(
+                            AppStrings.t(ref, 'মডেল টেস্ট', 'Exam Mode'),
+                            style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const Text(
-                            'টাইমার ও নেগেটিভ মার্কিং সহ প্রিলি সিমুলেশন',
-                            style: TextStyle(fontSize: 10, color: Colors.grey),
+                          Text(
+                            AppStrings.t(
+                              ref,
+                              'টাইমার ও নেগেটিভ মার্কিং সহ প্রিলি সিমুলেশন',
+                              'Timed exam with -0.50 negative marking',
+                            ),
+                            style: const TextStyle(
+                                fontSize: 10, color: Colors.grey),
                           ),
                         ],
                       ),
@@ -807,7 +951,7 @@ class __PracticeSetupBottomSheetState
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 22),
 
             // Start Button
             SizedBox(
@@ -825,12 +969,13 @@ class __PracticeSetupBottomSheetState
                   Navigator.of(context).pop(_PracticeConfig(
                     mode: _mode,
                     questionCount: _questionCount,
+                    batchTag: _selectedBatchTag,
                   ));
                 },
                 icon: const Icon(LucideIcons.play, size: 18),
-                label: const Text(
-                  'অনুশীলন শুরু করুন',
-                  style: TextStyle(
+                label: Text(
+                  AppStrings.t(ref, 'অনুশীলন শুরু করুন', 'Start Practice'),
+                  style: const TextStyle(
                       fontSize: 14, fontWeight: FontWeight.bold),
                 ),
               ),

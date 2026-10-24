@@ -39,6 +39,8 @@ abstract class QuestionRemoteDataSource {
 
   Future<List<QuestionEntity>> getQuestionsByIds(List<String> ids);
   Future<List<Map<String, dynamic>>> getSubjects({String examId = 'exam_bcs'});
+  Future<int> getQuestionCount(QuestionFilterParams filters);
+  Future<Map<String, int>> getSubjectQuestionCounts({String examId = 'exam_bcs'});
 }
 
 class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
@@ -255,5 +257,84 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
     }
 
     return _defaultBcsSubjects;
+  }
+
+  Query<Map<String, dynamic>> _buildCountQuery(QuestionFilterParams filters) {
+    Query<Map<String, dynamic>> q = _questionsCol;
+
+    if (filters.examId != null && filters.examId!.isNotEmpty) {
+      q = q.where('examId', isEqualTo: filters.examId);
+    }
+
+    if (filters.subjectId != null &&
+        filters.subjectId!.isNotEmpty &&
+        filters.subjectId != 'all') {
+      if (filters.subjectId!.startsWith('sub_bcs_') ||
+          filters.subjectId!.startsWith('subj_bcs_')) {
+        final coreSlug =
+            filters.subjectId!.replaceFirst(RegExp(r'^subj?_bcs_'), '');
+        q = q.where('subjectId',
+            whereIn: ['sub_bcs_$coreSlug', 'subj_bcs_$coreSlug']);
+      } else {
+        q = q.where('subjectId', isEqualTo: filters.subjectId);
+      }
+    }
+
+    if (filters.difficulty != null &&
+        filters.difficulty!.isNotEmpty &&
+        filters.difficulty != 'all') {
+      q = q.where('difficulty', isEqualTo: filters.difficulty);
+    }
+
+    if (filters.tag != null && filters.tag!.isNotEmpty) {
+      q = q.where('tags', arrayContains: filters.tag!.toLowerCase().trim());
+    }
+
+    q = q.where('status', isEqualTo: 'published');
+    return q;
+  }
+
+  @override
+  Future<int> getQuestionCount(QuestionFilterParams filters) async {
+    try {
+      final agg = await _buildCountQuery(filters).count().get();
+      return agg.count ?? 0;
+    } catch (e) {
+      debugPrint('Notice: Error counting questions: $e');
+      return 0;
+    }
+  }
+
+  @override
+  Future<Map<String, int>> getSubjectQuestionCounts(
+      {String examId = 'exam_bcs'}) async {
+    final Map<String, int> counts = {};
+    try {
+      final subjects = await getSubjects(examId: examId);
+      final futures = <Future<void>>[];
+
+      // Total across all subjects
+      futures.add(() async {
+        final total =
+            await getQuestionCount(QuestionFilterParams(examId: examId));
+        counts['all'] = total;
+      }());
+
+      for (final sub in subjects) {
+        final subId = sub['id'] as String? ?? '';
+        if (subId.isEmpty) continue;
+        futures.add(() async {
+          final c = await getQuestionCount(
+            QuestionFilterParams(examId: examId, subjectId: subId),
+          );
+          counts[subId] = c;
+        }());
+      }
+
+      await Future.wait(futures);
+    } catch (e) {
+      debugPrint('Notice: Error loading subject counts: $e');
+    }
+    return counts;
   }
 }

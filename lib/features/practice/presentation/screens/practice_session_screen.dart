@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:medhavi_mobile/core/constants/app_colors.dart';
 import 'package:medhavi_mobile/core/components/katex_math_text.dart';
+import 'package:medhavi_mobile/core/localization/app_strings.dart';
 import 'package:medhavi_mobile/core/utils/bengali_numeral_converter.dart';
 import 'package:medhavi_mobile/features/practice/presentation/controllers/practice_session_controller.dart';
 import 'package:medhavi_mobile/features/question_bank/presentation/controllers/question_bank_controller.dart';
@@ -12,27 +13,37 @@ import 'package:medhavi_mobile/features/question_bank/presentation/controllers/q
 class PracticeSessionScreen extends ConsumerWidget {
   const PracticeSessionScreen({super.key});
 
-  String _formatTimer(int seconds) {
+  String _formatTimer(WidgetRef ref, int seconds) {
     final m = seconds ~/ 60;
     final s = seconds % 60;
-    final mStr = BengaliNumeralConverter.toBengali(m.toString().padLeft(2, '0'));
-    final sStr = BengaliNumeralConverter.toBengali(s.toString().padLeft(2, '0'));
+    final mRaw = m.toString().padLeft(2, '0');
+    final sRaw = s.toString().padLeft(2, '0');
+    final mStr = AppStrings.isBn(ref)
+        ? BengaliNumeralConverter.toBengali(mRaw)
+        : mRaw;
+    final sStr = AppStrings.isBn(ref)
+        ? BengaliNumeralConverter.toBengali(sRaw)
+        : sRaw;
     return '$mStr:$sStr';
   }
 
-  void _showExitDialog(BuildContext context) {
+  void _showExitDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('অনুশীলন বন্ধ করবেন?'),
-        content: const Text(
-          'এখন বের হলে আপনার বর্তমান সেশনের অগ্রগতি সংরক্ষিত হবে না। আপনি কি নিশ্চিত?',
+        title: Text(AppStrings.t(ref, 'অনুশীলন বন্ধ করবেন?', 'End Practice Session?')),
+        content: Text(
+          AppStrings.t(
+            ref,
+            'এখন বের হলে আপনার বর্তমান সেশনের অগ্রগতি সংরক্ষিত হবে না। আপনি কি নিশ্চিত?',
+            'If you exit now, your current session progress will not be saved. Are you sure?',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('চালিয়ে যান'),
+            child: Text(AppStrings.t(ref, 'চালিয়ে যান', 'Continue')),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.rose),
@@ -40,7 +51,7 @@ class PracticeSessionScreen extends ConsumerWidget {
               Navigator.of(ctx).pop();
               context.pop();
             },
-            child: const Text('বের হয়ে যান'),
+            child: Text(AppStrings.t(ref, 'বের হয়ে যান', 'Exit')),
           ),
         ],
       ),
@@ -67,9 +78,9 @@ class PracticeSessionScreen extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'প্রশ্ন তালিকা ও ন্যাভিগেশন',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    Text(
+                      AppStrings.t(ref, 'প্রশ্ন তালিকা ও ন্যাভিগেশন', 'Question Palette & Navigation'),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     IconButton(
                       icon: const Icon(LucideIcons.x, size: 20),
@@ -128,7 +139,7 @@ class PracticeSessionScreen extends ConsumerWidget {
                                 : null,
                           ),
                           child: Text(
-                            BengaliNumeralConverter.toBengali('${idx + 1}'),
+                            AppStrings.num(ref, idx + 1),
                             style: TextStyle(
                               color: textColor,
                               fontWeight: FontWeight.bold,
@@ -192,7 +203,7 @@ class PracticeSessionScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
 
                 Text(
-                  'অনুশীলন সম্পন্ন হয়েছে!',
+                  AppStrings.t(ref, 'অনুশীলন সম্পন্ন হয়েছে!', 'Practice Completed!'),
                   style: GoogleFonts.hindSiliguri(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -202,8 +213,16 @@ class PracticeSessionScreen extends ConsumerWidget {
 
                 Text(
                   state.mode == PracticeMode.exam
-                      ? 'নেগেটিভ মার্কিং (-০.৫০) সহ চূড়ান্ত ফলাফল'
-                      : 'আপনার নিয়মিত অনুশীলনের সার্বিক অগ্রগতি',
+                      ? AppStrings.t(
+                          ref,
+                          'নেগেটিভ মার্কিং (-০.৫০) সহ চূড়ান্ত ফলাফল',
+                          'Final score with negative marking (-0.50)',
+                        )
+                      : AppStrings.t(
+                          ref,
+                          'আপনার নিয়মিত অনুশীলনের সার্বিক অগ্রগতি',
+                          'Your overall practice session performance',
+                        ),
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark
@@ -230,7 +249,8 @@ class PracticeSessionScreen extends ConsumerWidget {
                       Column(
                         children: [
                           Text(
-                            BengaliNumeralConverter.toBengali(
+                            AppStrings.num(
+                              ref,
                               state.mode == PracticeMode.exam
                                   ? state.totalScore.toStringAsFixed(1)
                                   : '${state.correctCount}/${state.totalQuestions}',
@@ -242,7 +262,9 @@ class PracticeSessionScreen extends ConsumerWidget {
                             ),
                           ),
                           Text(
-                            state.mode == PracticeMode.exam ? 'মোট স্কোর' : 'সঠিক উত্তর',
+                            state.mode == PracticeMode.exam
+                                ? AppStrings.t(ref, 'মোট স্কোর', 'Total Score')
+                                : AppStrings.t(ref, 'সঠিক উত্তর', 'Correct Answers'),
                             style: const TextStyle(
                                 fontSize: 12, color: Colors.white70),
                           ),
@@ -252,16 +274,16 @@ class PracticeSessionScreen extends ConsumerWidget {
                       Column(
                         children: [
                           Text(
-                            '${BengaliNumeralConverter.toBengali('${state.accuracyPercentage}')}%',
+                            '${AppStrings.num(ref, state.accuracyPercentage)}%',
                             style: GoogleFonts.hindSiliguri(
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
                               color: Colors.amber,
                             ),
                           ),
-                          const Text(
-                            'নির্ভুলতা (Accuracy)',
-                            style: TextStyle(fontSize: 12, color: Colors.white70),
+                          Text(
+                            AppStrings.t(ref, 'নির্ভুলতা (Accuracy)', 'Accuracy'),
+                            style: const TextStyle(fontSize: 12, color: Colors.white70),
                           ),
                         ],
                       ),
@@ -275,9 +297,8 @@ class PracticeSessionScreen extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: _ScoreMiniCard(
-                        label: 'সঠিক',
-                        value: BengaliNumeralConverter.toBengali(
-                            '${state.correctCount}'),
+                        label: AppStrings.t(ref, 'সঠিক', 'Correct'),
+                        value: AppStrings.num(ref, state.correctCount),
                         color: AppColors.emerald,
                         icon: LucideIcons.checkCircle,
                       ),
@@ -285,9 +306,8 @@ class PracticeSessionScreen extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: _ScoreMiniCard(
-                        label: 'ভুল',
-                        value: BengaliNumeralConverter.toBengali(
-                            '${state.incorrectCount}'),
+                        label: AppStrings.t(ref, 'ভুল', 'Wrong'),
+                        value: AppStrings.num(ref, state.incorrectCount),
                         color: AppColors.rose,
                         icon: LucideIcons.xCircle,
                       ),
@@ -295,9 +315,8 @@ class PracticeSessionScreen extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: _ScoreMiniCard(
-                        label: 'উত্তরহীন',
-                        value: BengaliNumeralConverter.toBengali(
-                            '${state.unattemptedCount}'),
+                        label: AppStrings.t(ref, 'উত্তরহীন', 'Skipped'),
+                        value: AppStrings.num(ref, state.unattemptedCount),
                         color: Colors.grey,
                         icon: LucideIcons.helpCircle,
                       ),
@@ -324,7 +343,7 @@ class PracticeSessionScreen extends ConsumerWidget {
                               .restartPractice();
                         },
                         icon: const Icon(LucideIcons.rotateCcw, size: 16),
-                        label: const Text('আবার দিন'),
+                        label: Text(AppStrings.t(ref, 'আবার দিন', 'Retry')),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -343,7 +362,7 @@ class PracticeSessionScreen extends ConsumerWidget {
                           context.pop();
                         },
                         icon: const Icon(LucideIcons.arrowRight, size: 16),
-                        label: const Text('হাবে ফিরুন'),
+                        label: Text(AppStrings.t(ref, 'হাবে ফিরুন', 'Back to Hub')),
                       ),
                     ),
                   ],
@@ -369,17 +388,25 @@ class PracticeSessionScreen extends ConsumerWidget {
             icon: const Icon(LucideIcons.arrowLeft),
             onPressed: () => context.pop(),
           ),
-          title: Text(state.title.isNotEmpty ? state.title : 'অনুশীলন লোড হচ্ছে...'),
+          title: Text(
+            state.title.isNotEmpty
+                ? state.title
+                : AppStrings.t(ref, 'অনুশীলন লোড হচ্ছে...', 'Loading Practice...'),
+          ),
         ),
-        body: const Center(
+        body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
               Text(
-                'বিসিএস প্রশ্ন সংগ্রহ করা হচ্ছে...',
-                style: TextStyle(fontWeight: FontWeight.w500),
+                AppStrings.t(
+                  ref,
+                  'বিসিএস প্রশ্ন সংগ্রহ করা হচ্ছে...',
+                  'Fetching BCS questions...',
+                ),
+                style: const TextStyle(fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -394,7 +421,11 @@ class PracticeSessionScreen extends ConsumerWidget {
             icon: const Icon(LucideIcons.arrowLeft),
             onPressed: () => context.pop(),
           ),
-          title: Text(state.title.isNotEmpty ? state.title : 'অনুশীলন সেশন'),
+          title: Text(
+            state.title.isNotEmpty
+                ? state.title
+                : AppStrings.t(ref, 'অনুশীলন সেশন', 'Practice Session'),
+          ),
         ),
         body: Center(
           child: Padding(
@@ -414,7 +445,7 @@ class PracticeSessionScreen extends ConsumerWidget {
                 ElevatedButton.icon(
                   onPressed: () => context.pop(),
                   icon: const Icon(LucideIcons.arrowLeft, size: 16),
-                  label: const Text('ফিরে যান'),
+                  label: Text(AppStrings.t(ref, 'ফিরে যান', 'Go Back')),
                 ),
               ],
             ),
@@ -431,17 +462,17 @@ class PracticeSessionScreen extends ConsumerWidget {
             icon: const Icon(LucideIcons.arrowLeft),
             onPressed: () => context.pop(),
           ),
-          title: const Text('অনুশীলন সেশন'),
+          title: Text(AppStrings.t(ref, 'অনুশীলন সেশন', 'Practice Session')),
         ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('কোনো প্রশ্ন নেই'),
+              Text(AppStrings.t(ref, 'কোনো প্রশ্ন নেই', 'No questions available')),
               const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: () => context.pop(),
-                child: const Text('ফিরে যান'),
+                child: Text(AppStrings.t(ref, 'ফিরে যান', 'Go Back')),
               ),
             ],
           ),
@@ -460,7 +491,7 @@ class PracticeSessionScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(LucideIcons.x),
-          onPressed: () => _showExitDialog(context),
+          onPressed: () => _showExitDialog(context, ref),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -471,8 +502,12 @@ class PracticeSessionScreen extends ConsumerWidget {
             ),
             Text(
               state.mode == PracticeMode.instant
-                  ? 'তাত্ক্ষণিক শিখন মোড'
-                  : 'পরীক্ষা মোড • নেগেটিভ মার্কিং সহ',
+                  ? AppStrings.t(ref, 'তাত্ক্ষণিক শিখন মোড', 'Instant Learning Mode')
+                  : AppStrings.t(
+                      ref,
+                      'পরীক্ষা মোড • নেগেটিভ মার্কিং সহ',
+                      'Exam Mode • Negative Marking',
+                    ),
               style: TextStyle(
                 fontSize: 11,
                 color: isDark
@@ -505,7 +540,7 @@ class PracticeSessionScreen extends ConsumerWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    _formatTimer(state.timeRemainingSeconds),
+                    _formatTimer(ref, state.timeRemainingSeconds),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -520,7 +555,9 @@ class PracticeSessionScreen extends ConsumerWidget {
 
           // Bookmark Toggle
           IconButton(
-            tooltip: isBookmarked ? 'বুকমার্ক সরান' : 'বুকমার্ক করুন',
+            tooltip: isBookmarked
+                ? AppStrings.t(ref, 'বুকমার্ক সরান', 'Remove Bookmark')
+                : AppStrings.t(ref, 'বুকমার্ক করুন', 'Bookmark'),
             icon: Icon(
               isBookmarked ? LucideIcons.bookmarkCheck : LucideIcons.bookmark,
               color: isBookmarked ? AppColors.amber : null,
@@ -535,7 +572,7 @@ class PracticeSessionScreen extends ConsumerWidget {
 
           // Question Palette Grid Icon
           IconButton(
-            tooltip: 'সব প্রশ্ন দেখুন',
+            tooltip: AppStrings.t(ref, 'সব প্রশ্ন দেখুন', 'Question Palette'),
             icon: const Icon(LucideIcons.layoutGrid, size: 20),
             onPressed: () => _showQuestionPalette(context, ref),
           ),
@@ -569,7 +606,7 @@ class PracticeSessionScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          'প্রশ্ন: ${BengaliNumeralConverter.toBengali('${currIdx + 1}')}/${BengaliNumeralConverter.toBengali('$totalQ')}',
+                          '${AppStrings.t(ref, 'প্রশ্ন', 'Question')}: ${AppStrings.num(ref, currIdx + 1)}/${AppStrings.num(ref, totalQ)}',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -586,8 +623,10 @@ class PracticeSessionScreen extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            BengaliNumeralConverter.formatBcsSource(
-                                question.tags.first),
+                            AppStrings.isBn(ref)
+                                ? BengaliNumeralConverter.formatBcsSource(
+                                    question.tags.first)
+                                : question.tags.first,
                             style: const TextStyle(fontSize: 11, color: Colors.grey),
                           ),
                         ),
@@ -670,7 +709,9 @@ class PracticeSessionScreen extends ConsumerWidget {
                         }
                       }
 
-                      final optionPrefixes = ['ক', 'খ', 'গ', 'ঘ'];
+                      final optionPrefixes = AppStrings.isBn(ref)
+                          ? ['ক', 'খ', 'গ', 'ঘ']
+                          : ['A', 'B', 'C', 'D'];
                       final prefix = optIdx < optionPrefixes.length
                           ? optionPrefixes[optIdx]
                           : '${optIdx + 1}';
@@ -749,14 +790,18 @@ class PracticeSessionScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Row(
+                          Row(
                             children: [
-                              Icon(LucideIcons.sparkles,
+                              const Icon(LucideIcons.sparkles,
                                   size: 16, color: AppColors.emerald),
-                              SizedBox(width: 6),
+                              const SizedBox(width: 6),
                               Text(
-                                'সঠিক উত্তর ও বিশদ ব্যাখ্যা',
-                                style: TextStyle(
+                                AppStrings.t(
+                                  ref,
+                                  'সঠিক উত্তর ও বিশদ ব্যাখ্যা',
+                                  'Correct Answer & Detailed Explanation',
+                                ),
+                                style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.emerald,
@@ -801,7 +846,7 @@ class PracticeSessionScreen extends ConsumerWidget {
                           .previousQuestion()
                       : null,
                   icon: const Icon(LucideIcons.chevronLeft, size: 16),
-                  label: const Text('পূর্ববর্তী'),
+                  label: Text(AppStrings.t(ref, 'পূর্ববর্তী', 'Previous')),
                 ),
                 const Spacer(),
                 if (isLast || state.mode == PracticeMode.exam)
@@ -819,7 +864,11 @@ class PracticeSessionScreen extends ConsumerWidget {
                       _showScorecardModal(context, ref);
                     },
                     icon: const Icon(LucideIcons.checkCheck, size: 16),
-                    label: Text(isLast ? 'ফলাফল দেখুন' : 'সাবমিট করুন'),
+                    label: Text(
+                      isLast
+                          ? AppStrings.t(ref, 'ফলাফল দেখুন', 'View Results')
+                          : AppStrings.t(ref, 'সাবমিট করুন', 'Submit'),
+                    ),
                   )
                 else
                   ElevatedButton.icon(
@@ -833,7 +882,7 @@ class PracticeSessionScreen extends ConsumerWidget {
                         .read(practiceSessionControllerProvider.notifier)
                         .nextQuestion(),
                     icon: const Icon(LucideIcons.chevronRight, size: 16),
-                    label: const Text('পরবর্তী'),
+                    label: Text(AppStrings.t(ref, 'পরবর্তী', 'Next')),
                   ),
               ],
             ),

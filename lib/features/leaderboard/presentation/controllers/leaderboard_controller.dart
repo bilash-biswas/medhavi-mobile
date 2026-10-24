@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:medhavi_mobile/features/leaderboard/domain/entities/leaderboard_entry.dart';
 import 'package:medhavi_mobile/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:medhavi_mobile/features/analytics/presentation/controllers/analytics_controller.dart';
 
 enum LeaderboardTimeframe { weekly, monthly, allTime }
 
@@ -36,19 +37,34 @@ class LeaderboardController extends Notifier<LeaderboardState> {
   @override
   LeaderboardState build() {
     final user = ref.watch(currentUserProvider);
-    final userName = user?.displayName ?? 'আপনি (You)';
+    final analytics = ref.watch(analyticsControllerProvider);
+    final userName = user?.displayName?.isNotEmpty == true
+        ? user!.displayName!
+        : 'আপনি (You)';
+
+    final realSolved = analytics.totalSolved;
+    final realScore =
+        (analytics.totalCorrect * 10) + (analytics.streakDays * 20);
+    final baseEntries = _getEntriesFor(LeaderboardTimeframe.weekly);
+    int computedRank = baseEntries.length + 1;
+    for (int i = 0; i < baseEntries.length; i++) {
+      if (realScore >= baseEntries[i].score) {
+        computedRank = i + 1;
+        break;
+      }
+    }
 
     return LeaderboardState(
       timeframe: LeaderboardTimeframe.weekly,
-      entries: _getEntriesFor(LeaderboardTimeframe.weekly),
+      entries: baseEntries,
       userEntry: LeaderboardEntry(
-        rank: 14,
+        rank: computedRank,
         userId: user?.uid ?? 'current_user',
         name: userName,
         targetBatch: '৪৭তম বিসিএস ক্যাডার',
-        solvedCount: 382,
-        score: 3820,
-        streakDays: 7,
+        solvedCount: realSolved,
+        score: realScore,
+        streakDays: analytics.streakDays,
         isCurrentUser: true,
       ),
     );

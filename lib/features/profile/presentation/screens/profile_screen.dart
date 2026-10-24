@@ -7,8 +7,8 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/localization/locale_controller.dart';
 import '../../../../core/theme/theme_controller.dart';
-import '../../../../core/utils/bengali_numeral_converter.dart';
 import 'package:medhavi_mobile/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:medhavi_mobile/features/analytics/presentation/controllers/analytics_controller.dart';
 import 'package:medhavi_mobile/features/bookmarks/presentation/controllers/bookmarks_controller.dart';
 import 'package:medhavi_mobile/features/mistakes/presentation/controllers/mistakes_controller.dart';
 
@@ -19,6 +19,8 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isBn = AppStrings.isBn(ref);
+    final analytics = ref.watch(analyticsControllerProvider);
     final bmState = ref.watch(bookmarksControllerProvider);
     final mbState = ref.watch(mistakesControllerProvider);
     final themeMode = ref.watch(themeModeControllerProvider);
@@ -27,14 +29,23 @@ class ProfileScreen extends ConsumerWidget {
     final isAuthenticated = user != null && !user.isAnonymous;
     final displayName = isAuthenticated && user.displayName?.isNotEmpty == true
         ? user.displayName!
-        : (isAuthenticated ? 'মেধাবী শিক্ষার্থী' : 'গেস্ট শিক্ষার্থী (Guest)');
+        : (isAuthenticated
+            ? AppStrings.t(ref, 'মেধাবী শিক্ষার্থী', 'Medhavi Learner')
+            : AppStrings.t(
+                ref, 'গেস্ট শিক্ষার্থী (Guest)', 'Guest Learner'));
     final email = isAuthenticated && user.email?.isNotEmpty == true
         ? user.email!
-        : 'অগ্রগতি ব্যাকআপ রাখতে সাইন ইন করুন';
+        : AppStrings.t(
+            ref,
+            'অগ্রগতি ব্যাকআপ রাখতে সাইন ইন করুন',
+            'Sign in to back up your progress to the cloud',
+          );
     final initial = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'M';
+    final accuracyPercent = (analytics.overallAccuracy * 100).round();
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF8FAFC),
+      backgroundColor:
+          isDark ? AppColors.backgroundDark : const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: Text(
           AppStrings.tr(ref, 'profile_title'),
@@ -42,7 +53,7 @@ class ProfileScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            tooltip: 'সেটিংস',
+            tooltip: AppStrings.t(ref, 'সেটিংস', 'Settings'),
             icon: const Icon(LucideIcons.settings),
             onPressed: () => context.push('/settings'),
           ),
@@ -120,30 +131,68 @@ class ProfileScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 8),
 
-                            // Cadre Pill
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.25),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(LucideIcons.award,
-                                      size: 12, color: Colors.amber),
-                                  SizedBox(width: 5),
-                                  Text(
-                                    '৪৭তম বিসিএস ক্যাডার প্রত্যাশী',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
+                            // Cadre & Streak Pill Row
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.25),
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
-                                ],
-                              ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(LucideIcons.award,
+                                          size: 12, color: Colors.amber),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        AppStrings.t(
+                                          ref,
+                                          '৪৭তম বিসিএস ক্যাডার প্রত্যাশী',
+                                          '47th BCS Cadre Aspirant',
+                                        ),
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 9, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: analytics.streakDays > 0
+                                        ? Colors.orange.withValues(alpha: 0.28)
+                                        : Colors.white.withValues(alpha: 0.14),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text('🔥',
+                                          style: TextStyle(fontSize: 10)),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        isBn
+                                            ? '${AppStrings.num(ref, analytics.streakDays)} দিন স্ট্রিক'
+                                            : '${analytics.streakDays}d Streak',
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -155,13 +204,13 @@ class ProfileScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
 
-            // 2. Prep Stats Grid
+            // 2. Real-Time Prep Stats Grid
             Row(
               children: [
                 Expanded(
                   child: _StatMiniBox(
-                    label: 'সমাধান',
-                    value: BengaliNumeralConverter.toBengaliNumber(520),
+                    label: AppStrings.t(ref, 'সমাধান', 'Solved'),
+                    value: AppStrings.num(ref, analytics.totalSolved),
                     icon: LucideIcons.layers,
                     color: AppColors.primary,
                     isDark: isDark,
@@ -170,8 +219,8 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _StatMiniBox(
-                    label: 'নির্ভুলতা',
-                    value: '৭৮%',
+                    label: AppStrings.t(ref, 'নির্ভুলতা', 'Accuracy'),
+                    value: '${AppStrings.num(ref, accuracyPercent)}%',
                     icon: LucideIcons.checkCircle2,
                     color: AppColors.success,
                     isDark: isDark,
@@ -180,20 +229,20 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _StatMiniBox(
-                    label: 'বুকমার্ক',
-                    value: BengaliNumeralConverter.toBengaliNumber(
-                        bmState.questions.length),
-                    icon: LucideIcons.bookmark,
-                    color: Colors.amber,
+                    label: AppStrings.t(ref, 'স্ট্রিক', 'Streak'),
+                    value: isBn
+                        ? '${AppStrings.num(ref, analytics.streakDays)} দিন'
+                        : '${analytics.streakDays}d',
+                    icon: LucideIcons.flame,
+                    color: Colors.orange,
                     isDark: isDark,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: _StatMiniBox(
-                    label: 'ভুল প্রশ্ন',
-                    value: BengaliNumeralConverter.toBengaliNumber(
-                        mbState.questions.length),
+                    label: AppStrings.t(ref, 'ভুল প্রশ্ন', 'Mistakes'),
+                    value: AppStrings.num(ref, mbState.questions.length),
                     icon: LucideIcons.alertTriangle,
                     color: AppColors.rose,
                     isDark: isDark,
@@ -204,7 +253,10 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // 3. Quick Actions Group
-            _SectionHeader(title: 'প্রস্তুতি ও অগ্রগতি ট্র্যাকিং'),
+            _SectionHeader(
+              title: AppStrings.t(
+                  ref, 'প্রস্তুতি ও অগ্রগতি ট্র্যাকিং', 'Progress & Preparation'),
+            ),
             const SizedBox(height: 8),
 
             Container(
@@ -218,40 +270,57 @@ class ProfileScreen extends ConsumerWidget {
               child: Column(
                 children: [
                   _ProfileTile(
-                    title: 'পারফরম্যান্স অ্যানালিটিক্স',
-                    subtitle: 'বিষয়ভিত্তিক নির্ভুলতা ও শক্তির চিত্র',
+                    title: AppStrings.t(ref, 'পারফরম্যান্স অ্যানালিটিক্স',
+                        'Performance Analytics'),
+                    subtitle: AppStrings.t(
+                        ref,
+                        'বিষয়ভিত্তিক নির্ভুলতা ও শক্তির চিত্র',
+                        'Subject-wise accuracy and mastery breakdown'),
                     icon: LucideIcons.barChart2,
                     iconColor: AppColors.primary,
                     onTap: () => context.push('/analytics'),
                   ),
                   const Divider(height: 1),
                   _ProfileTile(
-                    title: 'শীর্ষ লিডারবোর্ড',
-                    subtitle: 'অন্যান্য বিসিএস প্রার্থীদের সাথে র‍্যাংকিং',
+                    title: AppStrings.t(
+                        ref, 'শীর্ষ লিডারবোর্ড', 'Top Leaderboard'),
+                    subtitle: AppStrings.t(
+                        ref,
+                        'অন্যান্য বিসিএস প্রার্থীদের সাথে র‍্যাংকিং',
+                        'Compare your ranking with BCS aspirants'),
                     icon: LucideIcons.trophy,
                     iconColor: Colors.amber,
                     onTap: () => context.push('/leaderboard'),
                   ),
                   const Divider(height: 1),
                   _ProfileTile(
-                    title: 'লাইভ কুইজ ও মডেল টেস্ট',
-                    subtitle: 'টাইমড রিয়েল বিসিএস প্রিলিমিনারি পরীক্ষা',
+                    title: AppStrings.t(ref, 'লাইভ কুইজ ও মডেল টেস্ট',
+                        'Live Quiz & Model Tests'),
+                    subtitle: AppStrings.t(
+                        ref,
+                        'টাইমড রিয়েল বিসিএস প্রিলিমিনারি পরীক্ষা',
+                        'Timed BCS Preliminary simulation exams'),
                     icon: LucideIcons.playCircle,
                     iconColor: Colors.red,
                     onTap: () => context.push('/live-quiz'),
                   ),
                   const Divider(height: 1),
                   _ProfileTile(
-                    title: 'সংরক্ষিত প্রশ্নসমূহ (বুকমার্ক)',
-                    subtitle: '${BengaliNumeralConverter.toBengaliNumber(bmState.questions.length)}টি প্রশ্ন সংরক্ষিত আছে',
+                    title: AppStrings.t(ref, 'সংরক্ষিত প্রশ্নসমূহ (বুকমার্ক)',
+                        'Saved Bookmarks'),
+                    subtitle: isBn
+                        ? '${AppStrings.num(ref, bmState.questions.length)}টি প্রশ্ন সংরক্ষিত আছে'
+                        : '${bmState.questions.length} saved questions',
                     icon: LucideIcons.bookmark,
                     iconColor: Colors.teal,
                     onTap: () => context.go('/bookmarks'),
                   ),
                   const Divider(height: 1),
                   _ProfileTile(
-                    title: 'ভুল ব্যাংক',
-                    subtitle: '${BengaliNumeralConverter.toBengaliNumber(mbState.questions.length)}টি সমাধানযোগ্য ভুল',
+                    title: AppStrings.t(ref, 'ভুল ব্যাংক', 'Mistake Bank'),
+                    subtitle: isBn
+                        ? '${AppStrings.num(ref, mbState.questions.length)}টি সমাধানযোগ্য ভুল'
+                        : '${mbState.questions.length} mistakes to review',
                     icon: LucideIcons.alertTriangle,
                     iconColor: AppColors.rose,
                     onTap: () => context.go('/mistakes'),
@@ -262,7 +331,9 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // 4. Quick Preferences Group
-            _SectionHeader(title: 'অ্যাপ ও সেটিংস'),
+            _SectionHeader(
+              title: AppStrings.t(ref, 'অ্যাপ ও সেটিংস', 'App & Preferences'),
+            ),
             const SizedBox(height: 8),
 
             Container(
@@ -291,7 +362,7 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                     ),
                     title: Text(
-                      'থিম পরিবর্তন',
+                      AppStrings.t(ref, 'থিম পরিবর্তন', 'Theme Appearance'),
                       style: GoogleFonts.hindSiliguri(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
@@ -299,10 +370,12 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                     subtitle: Text(
                       themeMode == ThemeMode.dark
-                          ? 'ডার্ক মোড সক্রিয়'
+                          ? AppStrings.t(ref, 'ডার্ক মোড সক্রিয়', 'Dark Mode')
                           : (themeMode == ThemeMode.light
-                              ? 'লাইট মোড সক্রিয়'
-                              : 'সিস্টেম ডিফল্ট'),
+                              ? AppStrings.t(
+                                  ref, 'লাইট মোড সক্রিয়', 'Light Mode')
+                              : AppStrings.t(
+                                  ref, 'সিস্টেম ডিফল্ট', 'System Default')),
                       style: GoogleFonts.hindSiliguri(fontSize: 12),
                     ),
                     trailing: Switch.adaptive(
@@ -327,7 +400,7 @@ class ProfileScreen extends ConsumerWidget {
                           color: Colors.purple, size: 20),
                     ),
                     title: Text(
-                      'অ্যাপের ভাষা',
+                      AppStrings.t(ref, 'অ্যাপের ভাষা', 'App Language'),
                       style: GoogleFonts.hindSiliguri(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
@@ -359,8 +432,12 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   const Divider(height: 1),
                   _ProfileTile(
-                    title: 'পূর্ণাঙ্গ সেটিংস',
-                    subtitle: 'ক্যাশে ক্লিয়ার, KaTeX সূত্র ও নোটিফিকেশন',
+                    title: AppStrings.t(
+                        ref, 'পূর্ণাঙ্গ সেটিংস', 'Advanced Settings'),
+                    subtitle: AppStrings.t(
+                        ref,
+                        'ক্যাশে ক্লিয়ার, KaTeX সূত্র ও নোটিফিকেশন',
+                        'Cache clear, KaTeX math & notifications'),
                     icon: LucideIcons.settings,
                     iconColor: Colors.blueGrey,
                     onTap: () => context.push('/settings'),
@@ -385,7 +462,7 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   icon: const Icon(LucideIcons.logOut, size: 18),
                   label: Text(
-                    'লগআউট করুন',
+                    AppStrings.t(ref, 'লগআউট করুন', 'Sign Out'),
                     style: GoogleFonts.hindSiliguri(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
@@ -397,7 +474,8 @@ class ProfileScreen extends ConsumerWidget {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            'সফলভাবে লগআউট হয়েছেন',
+                            AppStrings.t(ref, 'সফলভাবে লগআউট হয়েছেন',
+                                'Signed out successfully'),
                             style: GoogleFonts.hindSiliguri(),
                           ),
                           behavior: SnackBarBehavior.floating,
@@ -421,7 +499,8 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   icon: const Icon(LucideIcons.logIn, size: 18),
                   label: Text(
-                    'সাইন ইন করুন / একাউন্ট খুলুন',
+                    AppStrings.t(ref, 'সাইন ইন করুন / একাউন্ট খুলুন',
+                        'Sign In / Create Account'),
                     style: GoogleFonts.hindSiliguri(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
@@ -500,7 +579,9 @@ class _StatMiniBox extends StatelessWidget {
             label,
             style: GoogleFonts.hindSiliguri(
               fontSize: 10,
-              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

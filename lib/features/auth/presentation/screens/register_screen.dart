@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/components/google_sign_in_button.dart';
+import '../../../../core/localization/app_strings.dart';
+import '../../../../core/localization/locale_controller.dart';
 import '../controllers/auth_controller.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -139,6 +141,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             }
           },
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: TextButton(
+              onPressed: () {
+                ref.read(localeControllerProvider.notifier).toggleLocale();
+              },
+              child: Text(
+                AppStrings.isBn(ref) ? 'EN' : 'বাং',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Center(
@@ -177,7 +193,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   const SizedBox(height: 16),
 
                   Text(
-                    'নতুন অ্যাকাউন্ট তৈরি করুন',
+                    AppStrings.t(ref, 'নতুন অ্যাকাউন্ট তৈরি করুন', 'Create New Account'),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.hindSiliguri(
                       fontSize: 26,
@@ -190,7 +206,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   const SizedBox(height: 6),
 
                   Text(
-                    'মেধাবী পরিবারে যুক্ত হয়ে শুরু করুন আপনার বিসিএস মিশন',
+                    AppStrings.t(
+                      ref,
+                      'মেধাবী পরিবারে যুক্ত হয়ে শুরু করুন আপনার বিসিএস মিশন',
+                      'Join Medhavi and begin your smart BCS preparation',
+                    ),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.hindSiliguri(
                       fontSize: 13,
@@ -241,7 +261,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                   // 3. Full Name Input
                   Text(
-                    'আপনার পূর্ণ নাম',
+                    AppStrings.t(ref, 'আপনার পূর্ণ নাম', 'Full Name'),
                     style: GoogleFonts.hindSiliguri(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -253,7 +273,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     controller: _nameController,
                     textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
-                      hintText: 'যেমন: ফারহানা আহমেদ',
+                      hintText: AppStrings.t(
+                        ref,
+                        'যেমন: বিলাশ বিশ্বাস (Bilash Biswas)',
+                        'e.g. Bilash Biswas',
+                      ),
                       prefixIcon: const Icon(LucideIcons.user, size: 18),
                       filled: true,
                       fillColor: isDark ? AppColors.cardDark : Colors.white,
@@ -291,7 +315,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                   // 4. Email Input
                   Text(
-                    'ইমেইল ঠিকানা',
+                    AppStrings.t(ref, 'ইমেইল ঠিকানা', 'Email Address'),
                     style: GoogleFonts.hindSiliguri(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -330,11 +354,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                     validator: (val) {
                       if (val == null || val.trim().isEmpty) {
-                        return 'ইমেইল ঠিকানা লিখুন';
+                        return AppStrings.t(ref, 'ইমেইল ঠিকানা লিখুন', 'Enter your email address');
                       }
                       if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
                           .hasMatch(val.trim())) {
-                        return 'সঠিক ইমেইল ফরম্যাট দিন';
+                        return AppStrings.t(ref, 'সঠিক ইমেইল ফরম্যাট দিন', 'Enter a valid email format');
                       }
                       return null;
                     },
@@ -343,7 +367,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                   // 5. Password Input
                   Text(
-                    'পাসওয়ার্ড',
+                    AppStrings.t(ref, 'পাসওয়ার্ড', 'Password'),
                     style: GoogleFonts.hindSiliguri(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -356,7 +380,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     obscureText: _obscurePassword,
                     textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
-                      hintText: 'কমপক্ষে ৬টি অক্ষর',
+                      hintText: AppStrings.t(ref, 'কমপক্ষে ৬টি অক্ষর', 'At least 6 characters'),
                       prefixIcon: const Icon(LucideIcons.lock, size: 18),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -392,10 +416,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                     validator: (val) {
                       if (val == null || val.isEmpty) {
-                        return 'পাসওয়ার্ড লিখুন';
+                        return AppStrings.t(ref, 'পাসওয়ার্ড লিখুন', 'Enter a password');
                       }
                       if (val.length < 6) {
-                        return 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে';
+                        return AppStrings.t(ref, 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে', 'Password must be at least 6 characters');
                       }
                       return null;
                     },
@@ -404,7 +428,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                   // 6. Confirm Password Input
                   Text(
-                    'পাসওয়ার্ড নিশ্চিত করুন',
+                    AppStrings.t(ref, 'পাসওয়ার্ড নিশ্চিত করুন', 'Confirm Password'),
                     style: GoogleFonts.hindSiliguri(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -418,7 +442,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _handleRegister(),
                     decoration: InputDecoration(
-                      hintText: 'পাসওয়ার্ড পুনরায় লিখুন',
+                      hintText: AppStrings.t(ref, 'পাসওয়ার্ড পুনরায় লিখুন', 'Re-enter your password'),
                       prefixIcon: const Icon(LucideIcons.shieldCheck, size: 18),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -454,10 +478,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                     validator: (val) {
                       if (val == null || val.isEmpty) {
-                        return 'পাসওয়ার্ড নিশ্চিত করুন';
+                        return AppStrings.t(ref, 'পাসওয়ার্ড নিশ্চিত করুন', 'Confirm your password');
                       }
                       if (val != _passwordController.text) {
-                        return 'উভয় পাসওয়ার্ড হুবহু এক হতে হবে';
+                        return AppStrings.t(ref, 'উভয় পাসওয়ার্ড হুবহু এক হতে হবে', 'Both passwords must match');
                       }
                       return null;
                     },
@@ -485,7 +509,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'আমি মেধাবীর সেবার শর্তাবলী ও গোপনীয়তা নীতি মেনে নিচ্ছি',
+                          AppStrings.t(
+                            ref,
+                            'আমি মেধাবীর সেবার শর্তাবলী ও গোপনীয়তা নীতি মেনে নিচ্ছি',
+                            'I agree to Medhavi Terms of Service and Privacy Policy',
+                          ),
                           style: GoogleFonts.hindSiliguri(
                             fontSize: 12,
                             color: isDark
@@ -541,7 +569,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                     color: Colors.white, size: 18),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'নিবন্ধন সম্পন্ন করুন',
+                                  AppStrings.t(ref, 'নিবন্ধন সম্পন্ন করুন', 'Complete Registration'),
                                   style: GoogleFonts.hindSiliguri(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -565,7 +593,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
-                          'অথবা',
+                          AppStrings.t(ref, 'অথবা', 'OR'),
                           style: GoogleFonts.hindSiliguri(
                             fontSize: 13,
                             color: isDark
@@ -598,7 +626,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'ইতিমধ্যেই অ্যাকাউন্ট আছে? ',
+                        AppStrings.t(ref, 'ইতিমধ্যেই অ্যাকাউন্ট আছে? ', 'Already have an account? '),
                         style: GoogleFonts.hindSiliguri(
                           fontSize: 14,
                           color: isDark
@@ -615,7 +643,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           }
                         },
                         child: Text(
-                          'লগইন করুন',
+                          AppStrings.t(ref, 'লগইন করুন', 'Login'),
                           style: GoogleFonts.hindSiliguri(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
