@@ -183,146 +183,96 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Header (Question Index, Source, Subject, Difficulty, Bookmark/Trash)
+          // 1. Header (Minimal Index, Source, Subject & Actions)
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    // Index Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.white10
-                            : Colors.black.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        isBn
-                            ? 'প্রশ্ন ${BengaliNumeralConverter.toBengaliNumber(widget.index + 1)}'
-                            : 'Q #${widget.index + 1}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-
-                    // Source Badge
-                    if (q.source != null) ...[
-                      Flexible(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.primaryBgDark
-                                : AppColors.primaryBgLight,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: AppColors.primary.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Text(
-                            isBn
-                                ? BengaliNumeralConverter.toBengaliBcsTitle(
-                                    q.source!)
-                                : q.source!,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                    ],
-
-                    // Subject Badge
-                    if (widget.subjectName != null) ...[
-                      Flexible(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.white10
-                                : Colors.black.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            widget.subjectName!,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
+                    // Minimal Index & Source Dot Metadata
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 7, vertical: 2.5),
+                            decoration: BoxDecoration(
                               color: isDark
-                                  ? AppColors.textSecondaryDark
-                                  : AppColors.textSecondaryLight,
+                                  ? Colors.white10
+                                  : const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              isBn
+                                  ? 'প্রশ্ন ${BengaliNumeralConverter.toBengaliNumber(widget.index + 1)}'
+                                  : 'Q #${widget.index + 1}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: isDark
+                                    ? AppColors.textPrimaryDark
+                                    : AppColors.textPrimaryLight,
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                    ],
-
-                    // Difficulty Badge
-                    _buildDifficultyBadge(q.difficulty, isDark, isBn),
-
-                    // Admin Verified Badge
-                    if (q.adminVerified) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF064E3B)
-                              : const Color(0xFFECFDF5),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: isDark
-                                ? const Color(0xFF059669)
-                                : const Color(0xFFA7F3D0),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
+                          if (q.source != null) ...[
+                            const SizedBox(width: 6),
+                            Text('•',
+                                style: TextStyle(
+                                    color: Colors.grey.withValues(alpha: 0.5),
+                                    fontSize: 10)),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                isBn
+                                    ? BengaliNumeralConverter.toBengaliBcsTitle(
+                                        q.source!)
+                                    : q.source!,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (widget.subjectName != null) ...[
+                            const SizedBox(width: 6),
+                            Text('•',
+                                style: TextStyle(
+                                    color: Colors.grey.withValues(alpha: 0.5),
+                                    fontSize: 10)),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                widget.subjectName!,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isDark
+                                      ? AppColors.textSecondaryDark
+                                      : AppColors.textSecondaryLight,
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (q.adminVerified) ...[
+                            const SizedBox(width: 6),
                             Icon(
-                              LucideIcons.shieldCheck,
-                              size: 11,
+                              LucideIcons.badgeCheck,
+                              size: 13,
                               color: isDark
                                   ? const Color(0xFF34D399)
                                   : const Color(0xFF059669),
                             ),
-                            const SizedBox(width: 3),
-                            Text(
-                              isBn ? 'ভেরিফাইড' : 'Verified',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: isDark
-                                    ? const Color(0xFF34D399)
-                                    : const Color(0xFF059669),
-                              ),
-                            ),
                           ],
-                        ),
+                        ],
                       ),
-                    ],
-
-                    const Spacer(),
+                    ),
+                    const SizedBox(width: 4),
 
                     // Remove Button (Optional for Bookmarks / Mistakes)
                     if (widget.onRemove != null) ...[
@@ -364,7 +314,6 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
                   ],
                 ),
                 const SizedBox(height: 12),
-
                 // Question Text
                 KaTexMathText(
                   text: q.question,
@@ -680,36 +629,7 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
     );
   }
 
-  Widget _buildDifficultyBadge(String difficulty, bool isDark, bool isBn) {
-    Color bg;
-    Color fg;
-    String label;
-    if (difficulty == 'easy') {
-      bg = isDark ? AppColors.successDark : AppColors.successLight;
-      fg = AppColors.success;
-      label = isBn ? 'সহজ' : 'Easy';
-    } else if (difficulty == 'medium') {
-      bg = isDark ? AppColors.warningDark : AppColors.warningLight;
-      fg = AppColors.warning;
-      label = isBn ? 'মধ্যম' : 'Medium';
-    } else {
-      bg = isDark ? AppColors.errorDark : AppColors.errorLight;
-      fg = AppColors.error;
-      label = isBn ? 'কঠিন' : 'Hard';
-    }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: fg),
-      ),
-    );
-  }
 
   Widget _buildAnswerComparisonBanner({
     required bool isDark,

@@ -68,6 +68,7 @@ class QuestionBankScreen extends ConsumerStatefulWidget {
 class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
+  bool _isSearchOpen = false;
 
   @override
   void initState() {
@@ -90,7 +91,276 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
     }
   }
 
-  void _openBatchSelector(BuildContext context, String currentTag, bool isBn) {
+  int _calculateActiveFilters(QuestionBankState state) {
+    int count = 0;
+    if (state.selectedBatchTag.isNotEmpty) count++;
+    if (state.selectedSubjectId.isNotEmpty) count++;
+    if (state.selectedDifficulty != 'all') count++;
+    if (state.searchQuery.isNotEmpty) count++;
+    return count;
+  }
+
+  void _openFilterBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Consumer(
+          builder: (context, ref, _) {
+            final state = ref.watch(questionBankControllerProvider);
+            final notifier = ref.read(questionBankControllerProvider.notifier);
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            final isBn = AppStrings.isBn(ref);
+
+            return DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.75,
+              maxChildSize: 0.92,
+              minChildSize: 0.45,
+              builder: (_, sheetScrollController) {
+                return Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white24 : Colors.black12,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(LucideIcons.slidersHorizontal,
+                                  size: 18, color: AppColors.primary),
+                              const SizedBox(width: 8),
+                              Text(
+                                AppStrings.t(ref, 'ফিল্টার ও বাছাই', 'Filter Questions'),
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              if (_calculateActiveFilters(state) > 0)
+                                TextButton(
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    notifier.resetAllFilters();
+                                    Navigator.pop(ctx);
+                                  },
+                                  child: Text(
+                                    AppStrings.t(ref, 'রিসেট', 'Reset'),
+                                    style: const TextStyle(color: AppColors.error),
+                                  ),
+                                ),
+                              IconButton(
+                                icon: const Icon(LucideIcons.x, size: 20),
+                                onPressed: () => Navigator.pop(ctx),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: ListView(
+                        controller: sheetScrollController,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        children: [
+                          // 1. BCS Batch Section
+                          Text(
+                            AppStrings.t(ref, 'বিসিএস ব্যাচ (১০ম - ৫০তম)', 'BCS Batch (10th - 50th)'),
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: kBcsBatches.take(15).map((batch) {
+                              final isSelected = batch['id'] == state.selectedBatchTag;
+                              final label = isBn
+                                  ? (batch['labelBn'] ?? batch['label']!)
+                                  : (batch['labelEn'] ?? batch['label']!);
+                              return ChoiceChip(
+                                selected: isSelected,
+                                label: Text(label, style: const TextStyle(fontSize: 12)),
+                                onSelected: (_) {
+                                  notifier.setBatch(batch['id']!);
+                                },
+                              );
+                            }).toList(),
+                          ),
+                          if (kBcsBatches.length > 15) ...[
+                            const SizedBox(height: 8),
+                            InkWell(
+                              onTap: () {
+                                Navigator.pop(ctx);
+                                _openBatchFullSelector(context, state.selectedBatchTag, isBn);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      AppStrings.t(ref, 'সব ৪১টি বিসিএস ব্যাচ দেখুন ➔', 'View all 41 BCS Batches ➔'),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 20),
+
+                          // 2. Difficulty Section
+                          Text(
+                            AppStrings.t(ref, 'কঠিনতার মান', 'Difficulty Level'),
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              _buildModalDifficultyChip(
+                                ref: ref,
+                                label: AppStrings.t(ref, 'সব মান', 'All Levels'),
+                                value: 'all',
+                                isSelected: state.selectedDifficulty == 'all',
+                                color: AppColors.primary,
+                                onSelected: () => notifier.setDifficulty('all'),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildModalDifficultyChip(
+                                ref: ref,
+                                label: AppStrings.t(ref, 'সহজ', 'Easy'),
+                                value: 'easy',
+                                isSelected: state.selectedDifficulty == 'easy',
+                                color: AppColors.success,
+                                onSelected: () => notifier.setDifficulty('easy'),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildModalDifficultyChip(
+                                ref: ref,
+                                label: AppStrings.t(ref, 'মধ্যম', 'Medium'),
+                                value: 'medium',
+                                isSelected: state.selectedDifficulty == 'medium',
+                                color: AppColors.warning,
+                                onSelected: () => notifier.setDifficulty('medium'),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildModalDifficultyChip(
+                                ref: ref,
+                                label: AppStrings.t(ref, 'কঠিন', 'Hard'),
+                                value: 'hard',
+                                isSelected: state.selectedDifficulty == 'hard',
+                                color: AppColors.error,
+                                onSelected: () => notifier.setDifficulty('hard'),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+
+                          // 3. Subject Section
+                          Text(
+                            AppStrings.t(ref, 'বিষয়ভিত্তিক বাছাই', 'Subjects'),
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              ChoiceChip(
+                                selected: state.selectedSubjectId.isEmpty,
+                                label: Text(
+                                  AppStrings.t(ref, 'সব বিষয়', 'All Subjects'),
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                onSelected: (_) => notifier.setSubject(''),
+                              ),
+                              ...state.subjects.map((sub) {
+                                final subId = sub['id'] as String? ?? '';
+                                final isSelected = state.selectedSubjectId == subId;
+                                final subName = isBn
+                                    ? (sub['name'] as String? ?? '')
+                                    : ((sub['nameEn'] as String?)?.isNotEmpty == true
+                                        ? sub['nameEn'] as String
+                                        : (sub['name'] as String? ?? ''));
+                                final count = state.subjectCounts[subId] ?? 0;
+                                return ChoiceChip(
+                                  selected: isSelected,
+                                  label: Text(
+                                    count > 0 ? '$subName ($count)' : subName,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  onSelected: (_) => notifier.setSubject(subId),
+                                );
+                              }),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
+                    // Bottom Apply Button
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.cardDark : Colors.white,
+                        border: Border(
+                          top: BorderSide(
+                            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                          ),
+                        ),
+                      ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () => Navigator.pop(ctx),
+                          child: Text(
+                            state.totalMatchingCount > 0
+                                ? '${AppStrings.t(ref, 'প্রয়োগ করুন', 'Apply')} (${AppStrings.num(ref, state.totalMatchingCount)}টি প্রশ্ন)'
+                                : AppStrings.t(ref, 'প্রয়োগ করুন', 'Apply Filters'),
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _openBatchFullSelector(BuildContext context, String currentTag, bool isBn) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -101,15 +371,15 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return DraggableScrollableSheet(
           expand: false,
-          initialChildSize: 0.7,
-          maxChildSize: 0.9,
-          minChildSize: 0.4,
+          initialChildSize: 0.75,
+          maxChildSize: 0.92,
+          minChildSize: 0.45,
           builder: (_, controller) {
             return Column(
               children: [
                 const SizedBox(height: 12),
                 Container(
-                  width: 40,
+                  width: 36,
                   height: 4,
                   decoration: BoxDecoration(
                     color: isDark ? Colors.white24 : Colors.black12,
@@ -122,13 +392,8 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        isBn
-                            ? 'বিসিএস ব্যাচ নির্বাচন করুন'
-                            : 'Select BCS Batch',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        isBn ? 'বিসিএস ব্যাচ নির্বাচন করুন' : 'Select BCS Batch',
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                       ),
                       IconButton(
                         icon: const Icon(LucideIcons.x, size: 20),
@@ -152,23 +417,18 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                         title: Text(
                           label,
                           style: TextStyle(
-                            fontWeight:
-                                isSelected ? FontWeight.bold : FontWeight.normal,
+                            fontSize: 14,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                             color: isSelected
                                 ? AppColors.primary
-                                : (isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight),
+                                : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
                           ),
                         ),
                         trailing: isSelected
-                            ? const Icon(LucideIcons.check,
-                                color: AppColors.primary, size: 20)
+                            ? const Icon(LucideIcons.check, color: AppColors.primary, size: 18)
                             : null,
                         onTap: () {
-                          ref
-                              .read(questionBankControllerProvider.notifier)
-                              .setBatch(batch['id']!);
+                          ref.read(questionBankControllerProvider.notifier).setBatch(batch['id']!);
                           Navigator.pop(ctx);
                         },
                       );
@@ -183,6 +443,42 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
     );
   }
 
+  Widget _buildModalDifficultyChip({
+    required WidgetRef ref,
+    required String label,
+    required String value,
+    required bool isSelected,
+    required Color color,
+    required VoidCallback onSelected,
+  }) {
+    return Expanded(
+      child: InkWell(
+        onTap: onSelected,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected ? color.withValues(alpha: 0.15) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected ? color : Colors.grey.withValues(alpha: 0.3),
+              width: isSelected ? 1.5 : 1,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              color: isSelected ? color : Colors.grey,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(questionBankControllerProvider);
@@ -191,8 +487,9 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
     final isBn = AppStrings.isBn(ref);
 
     final filteredList = state.filteredQuestions;
+    final activeFiltersCount = _calculateActiveFilters(state);
 
-    // Find current batch label
+    // Current batch label
     final currentBatch = kBcsBatches.firstWhere(
       (b) => b['id'] == state.selectedBatchTag,
       orElse: () => kBcsBatches.first,
@@ -201,156 +498,156 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
         ? (currentBatch['labelBn'] ?? currentBatch['label']!)
         : (currentBatch['labelEn'] ?? currentBatch['label']!);
 
-    final allQuestionsCount = state.subjectCounts['all'] ?? 0;
-
     return Scaffold(
+      backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF8FAFC),
       appBar: AutoHideAppBar(
         child: AppBar(
+          elevation: 0,
+          backgroundColor: isDark ? AppColors.cardDark : Colors.white,
+          titleSpacing: 16,
           title: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(7),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(LucideIcons.bookOpen,
-                    color: AppColors.primary, size: 20),
+                child: const Icon(LucideIcons.bookOpen, color: AppColors.primary, size: 18),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppStrings.t(
-                          ref, 'প্রশ্ন ব্যাংক (Question Bank)', 'Question Bank'),
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold),
+              const SizedBox(width: 8),
+              Text(
+                AppStrings.t(ref, 'প্রশ্ন ব্যাংক', 'Question Bank'),
+                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+              ),
+              if (state.totalMatchingCount > 0) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    AppStrings.num(ref, state.totalMatchingCount),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
                     ),
-                    Text(
-                      AppStrings.t(
-                        ref,
-                        '১০ম থেকে ৫০তম বিসিএস প্রিলিমিনারি প্রশ্ন ও ব্যাখ্যা',
-                        '10th to 50th BCS Preliminary MCQs & Explanations',
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textSecondaryLight,
-                        fontWeight: FontWeight.normal,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
+          actions: [
+            // Search Toggle Icon
+            IconButton(
+              tooltip: AppStrings.t(ref, 'অনুসন্ধান', 'Search'),
+              icon: Icon(
+                _isSearchOpen ? LucideIcons.searchX : LucideIcons.search,
+                size: 20,
+                color: _isSearchOpen || state.searchQuery.isNotEmpty
+                    ? AppColors.primary
+                    : (isDark ? Colors.white70 : Colors.black87),
+              ),
+              onPressed: () {
+                setState(() {
+                  _isSearchOpen = !_isSearchOpen;
+                  if (!_isSearchOpen && state.searchQuery.isNotEmpty) {
+                    _searchController.clear();
+                    notifier.setSearchQuery('');
+                  }
+                });
+              },
+            ),
+
+            // Auto Reveal Eye Toggle Icon
+            IconButton(
+              tooltip: state.autoRevealAll
+                  ? AppStrings.t(ref, 'সব উত্তর দৃশ্যমান', 'Answers Visible')
+                  : AppStrings.t(ref, 'সব উত্তর লুকানো', 'Answers Hidden'),
+              icon: Icon(
+                state.autoRevealAll ? LucideIcons.eye : LucideIcons.eyeOff,
+                size: 20,
+                color: state.autoRevealAll
+                    ? AppColors.primary
+                    : (isDark ? Colors.white60 : Colors.black54),
+              ),
+              onPressed: notifier.toggleAutoRevealAll,
+            ),
+
+            // Filter Button with Badge
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  tooltip: AppStrings.t(ref, 'ফিল্টার', 'Filters'),
+                  icon: Icon(
+                    LucideIcons.slidersHorizontal,
+                    size: 20,
+                    color: activeFiltersCount > 0
+                        ? AppColors.primary
+                        : (isDark ? Colors.white70 : Colors.black87),
+                  ),
+                  onPressed: () => _openFilterBottomSheet(context),
+                ),
+                if (activeFiltersCount > 0)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      width: 16,
+                      height: 16,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '$activeFiltersCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 4),
+          ],
         ),
       ),
       body: Column(
         children: [
-          // 1. Top Filter Controls (Batch & Search Bar)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.cardDark : AppColors.cardLight,
-              border: Border(
-                bottom: BorderSide(
-                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
-                ),
-              ),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    // BCS Batch Selector Button
-                    Expanded(
-                      flex: 6,
-                      child: InkWell(
-                        onTap: () => _openBatchSelector(
-                            context, state.selectedBatchTag, isBn),
-                        borderRadius: BorderRadius.circular(10),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.backgroundDark
-                                : AppColors.backgroundLight,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: isDark
-                                  ? AppColors.borderDark
-                                  : AppColors.borderLight,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  currentBatchLabel,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark
-                                        ? AppColors.textPrimaryDark
-                                        : AppColors.textPrimaryLight,
-                                  ),
-                                ),
-                              ),
-                              const Icon(LucideIcons.chevronDown, size: 16),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-
-                    // Reset button if filters active
-                    if (state.selectedSubjectId.isNotEmpty ||
-                        state.selectedBatchTag.isNotEmpty ||
-                        state.selectedDifficulty != 'all' ||
-                        state.searchQuery.isNotEmpty) ...[
-                      IconButton(
-                        tooltip: AppStrings.t(
-                            ref, 'ফিল্টার রিসেট করুন', 'Reset Filters'),
-                        icon: const Icon(LucideIcons.rotateCcw, size: 18),
-                        onPressed: () {
-                          _searchController.clear();
-                          notifier.resetAllFilters();
-                        },
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 8),
-
-                // Search Box
-                TextField(
+          // 1. Slim Animated Search Bar (only appears when search icon tapped)
+          if (_isSearchOpen)
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+              color: isDark ? AppColors.cardDark : Colors.white,
+              child: SizedBox(
+                height: 40,
+                child: TextField(
                   controller: _searchController,
+                  autofocus: true,
                   onChanged: notifier.setSearchQuery,
                   style: const TextStyle(fontSize: 13),
                   decoration: InputDecoration(
                     hintText: AppStrings.t(
                       ref,
-                      'প্রশ্ন, ট্যাগ বা বিষয় অনুসন্ধান করুন...',
-                      'Search questions, tags, or topics...',
+                      'প্রশ্ন বা টপিক দিয়ে খুঁজুন...',
+                      'Search question text or topic...',
                     ),
                     hintStyle: TextStyle(
                       fontSize: 13,
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight,
+                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                     ),
-                    prefixIcon: const Icon(LucideIcons.search,
-                        size: 18, color: Colors.grey),
+                    prefixIcon: const Icon(LucideIcons.search, size: 16, color: Colors.grey),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(LucideIcons.x, size: 16),
+                            icon: const Icon(LucideIcons.x, size: 14),
                             onPressed: () {
                               _searchController.clear();
                               notifier.setSearchQuery('');
@@ -358,62 +655,139 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                           )
                         : null,
                     isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     filled: true,
-                    fillColor: isDark
-                        ? AppColors.backgroundDark
-                        : AppColors.backgroundLight,
+                    fillColor: isDark ? AppColors.backgroundDark : const Color(0xFFF1F5F9),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                        color:
-                            isDark ? AppColors.borderDark : AppColors.borderLight,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                        color:
-                            isDark ? AppColors.borderDark : AppColors.borderLight,
-                      ),
+                      borderSide: BorderSide.none,
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
 
-          // 2. Horizontal Subject Pills with Live Question Counts
+          // 2. Single Slim 38px Quick-Filter Strip
           Container(
-            height: 46,
-            padding: const EdgeInsets.symmetric(vertical: 5),
+            height: 44,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.cardDark : AppColors.cardLight,
+              color: isDark ? AppColors.cardDark : Colors.white,
               border: Border(
                 bottom: BorderSide(
-                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                  color: isDark ? AppColors.borderDark : const Color(0xFFE2E8F0),
+                  width: 0.8,
                 ),
               ),
             ),
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               children: [
-                // 'All Subjects' Chip
+                // Batch Chip (e.g. "৫০তম বিসিএস ▾" or "সব ব্যাচ ▾")
+                InkWell(
+                  onTap: () => _openBatchFullSelector(context, state.selectedBatchTag, isBn),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: state.selectedBatchTag.isNotEmpty
+                          ? AppColors.primary.withValues(alpha: 0.12)
+                          : (isDark ? Colors.white10 : const Color(0xFFF1F5F9)),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: state.selectedBatchTag.isNotEmpty
+                            ? AppColors.primary
+                            : Colors.transparent,
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          LucideIcons.calendar,
+                          size: 13,
+                          color: state.selectedBatchTag.isNotEmpty
+                              ? AppColors.primary
+                              : (isDark ? Colors.white70 : Colors.black87),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          currentBatchLabel,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: state.selectedBatchTag.isNotEmpty
+                                ? FontWeight.bold
+                                : FontWeight.w500,
+                            color: state.selectedBatchTag.isNotEmpty
+                                ? AppColors.primary
+                                : (isDark ? Colors.white70 : Colors.black87),
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Icon(
+                          LucideIcons.chevronDown,
+                          size: 13,
+                          color: state.selectedBatchTag.isNotEmpty
+                              ? AppColors.primary
+                              : Colors.grey,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Reset Chip (only if filters are active)
+                if (activeFiltersCount > 0)
+                  InkWell(
+                    onTap: () {
+                      _searchController.clear();
+                      notifier.resetAllFilters();
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(LucideIcons.rotateCcw, size: 12, color: AppColors.error),
+                          const SizedBox(width: 4),
+                          Text(
+                            AppStrings.t(ref, 'রিসেট', 'Reset'),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // All Subjects Chip
                 Padding(
-                  padding: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.only(right: 6),
                   child: FilterChip(
                     selected: state.selectedSubjectId.isEmpty,
                     label: Text(
-                      allQuestionsCount > 0
-                          ? '${AppStrings.t(ref, 'সব বিষয়', 'All Subjects')} (${AppStrings.num(ref, allQuestionsCount)})'
-                          : AppStrings.t(ref, 'সব বিষয়', 'All Subjects'),
+                      AppStrings.t(ref, 'সব বিষয়', 'All Subjects'),
                       style: const TextStyle(fontSize: 12),
                     ),
                     onSelected: (_) => notifier.setSubject(''),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
                   ),
                 ),
+
+                // Horizontal Subject Pills
                 ...state.subjects.map((sub) {
                   final subId = sub['id'] as String? ?? '';
                   final isSelected = state.selectedSubjectId == subId;
@@ -422,18 +796,15 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                       : ((sub['nameEn'] as String?)?.isNotEmpty == true
                           ? sub['nameEn'] as String
                           : (sub['name'] as String? ?? ''));
-                  final count = state.subjectCounts[subId] ?? 0;
                   return Padding(
-                    padding: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.only(right: 6),
                     child: FilterChip(
                       selected: isSelected,
-                      label: Text(
-                        count > 0
-                            ? '$subName (${AppStrings.num(ref, count)})'
-                            : subName,
-                        style: const TextStyle(fontSize: 12),
-                      ),
+                      label: Text(subName, style: const TextStyle(fontSize: 12)),
                       onSelected: (_) => notifier.setSubject(subId),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
                     ),
                   );
                 }),
@@ -441,165 +812,10 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
             ),
           ),
 
-          // 3. Difficulty Filter Row + Stats & Auto-Reveal Toggle Banner
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-            decoration: BoxDecoration(
-              color:
-                  isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-              border: Border(
-                bottom: BorderSide(
-                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
-                ),
-              ),
-            ),
-            child: Column(
-              children: [
-                // Difficulty Filter Pills
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildDifficultyFilterPill(
-                        ref: ref,
-                        isDark: isDark,
-                        value: 'all',
-                        selectedValue: state.selectedDifficulty,
-                        label: AppStrings.t(ref, 'সব মান', 'All Levels'),
-                        activeColor: AppColors.primary,
-                        onTap: () => notifier.setDifficulty('all'),
-                      ),
-                      const SizedBox(width: 6),
-                      _buildDifficultyFilterPill(
-                        ref: ref,
-                        isDark: isDark,
-                        value: 'easy',
-                        selectedValue: state.selectedDifficulty,
-                        label: AppStrings.t(ref, 'সহজ', 'Easy'),
-                        activeColor: AppColors.success,
-                        onTap: () => notifier.setDifficulty('easy'),
-                      ),
-                      const SizedBox(width: 6),
-                      _buildDifficultyFilterPill(
-                        ref: ref,
-                        isDark: isDark,
-                        value: 'medium',
-                        selectedValue: state.selectedDifficulty,
-                        label: AppStrings.t(ref, 'মধ্যম', 'Medium'),
-                        activeColor: AppColors.warning,
-                        onTap: () => notifier.setDifficulty('medium'),
-                      ),
-                      const SizedBox(width: 6),
-                      _buildDifficultyFilterPill(
-                        ref: ref,
-                        isDark: isDark,
-                        value: 'hard',
-                        selectedValue: state.selectedDifficulty,
-                        label: AppStrings.t(ref, 'কঠিন', 'Hard'),
-                        activeColor: AppColors.error,
-                        onTap: () => notifier.setDifficulty('hard'),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(LucideIcons.sparkles,
-                            size: 15, color: AppColors.amber),
-                        const SizedBox(width: 6),
-                        Text(
-                          state.totalMatchingCount > 0 &&
-                                  state.searchQuery.trim().isEmpty
-                              ? (isBn
-                                  ? '${AppStrings.num(ref, filteredList.length)} / ${AppStrings.num(ref, state.totalMatchingCount)}টি প্রশ্ন প্রদর্শিত'
-                                  : 'Showing ${filteredList.length} of ${state.totalMatchingCount} questions')
-                              : (isBn
-                                  ? '${AppStrings.num(ref, filteredList.length)}টি প্রশ্ন প্রদর্শিত'
-                                  : '${filteredList.length} questions shown'),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // Auto Reveal Master Switch
-                    InkWell(
-                      onTap: notifier.toggleAutoRevealAll,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: state.autoRevealAll
-                              ? AppColors.primary.withValues(alpha: 0.12)
-                              : (isDark
-                                  ? AppColors.cardDark
-                                  : AppColors.cardLight),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: state.autoRevealAll
-                                ? AppColors.primary
-                                : (isDark
-                                    ? AppColors.borderDark
-                                    : AppColors.borderLight),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              state.autoRevealAll
-                                  ? LucideIcons.eye
-                                  : LucideIcons.eyeOff,
-                              size: 14,
-                              color: state.autoRevealAll
-                                  ? AppColors.primary
-                                  : (isDark
-                                      ? AppColors.textSecondaryDark
-                                      : AppColors.textSecondaryLight),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              state.autoRevealAll
-                                  ? AppStrings.t(
-                                      ref, 'সব উত্তর দৃশ্যমান', 'Answers Visible')
-                                  : AppStrings.t(
-                                      ref, 'সব উত্তর লুকানো', 'Answers Hidden'),
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: state.autoRevealAll
-                                    ? AppColors.primary
-                                    : (isDark
-                                        ? AppColors.textSecondaryDark
-                                        : AppColors.textSecondaryLight),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // 4. Questions List
+          // 3. Question Feed
           Expanded(
             child: state.isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(),
-                  )
+                ? const Center(child: CircularProgressIndicator())
                 : state.errorMessage != null && filteredList.isEmpty
                     ? Center(
                         child: Padding(
@@ -607,31 +823,23 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(LucideIcons.alertTriangle,
-                                  size: 48, color: Colors.amber),
+                              const Icon(LucideIcons.alertTriangle, size: 40, color: Colors.amber),
                               const SizedBox(height: 12),
                               Text(
-                                AppStrings.t(ref, 'প্রশ্ন লোড করতে সমস্যা হয়েছে',
-                                    'Failed to load questions'),
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
+                                AppStrings.t(ref, 'প্রশ্ন লোড করতে সমস্যা হয়েছে', 'Failed to load questions'),
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 6),
                               Text(
                                 state.errorMessage!,
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                    fontSize: 12, color: Colors.grey),
+                                style: const TextStyle(fontSize: 12, color: Colors.grey),
                               ),
                               const SizedBox(height: 16),
                               ElevatedButton.icon(
-                                onPressed: () {
-                                  notifier.loadInitialQuestions();
-                                },
-                                icon:
-                                    const Icon(LucideIcons.refreshCw, size: 16),
-                                label: Text(AppStrings.t(
-                                    ref, 'পুনরায় চেষ্টা করুন', 'Retry')),
+                                onPressed: notifier.loadInitialQuestions,
+                                icon: const Icon(LucideIcons.refreshCw, size: 16),
+                                label: Text(AppStrings.t(ref, 'পুনরায় চেষ্টা করুন', 'Retry')),
                               ),
                             ],
                           ),
@@ -639,143 +847,98 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                       )
                     : filteredList.isEmpty
                         ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(LucideIcons.helpCircle,
-                                    size: 48, color: Colors.grey),
-                                const SizedBox(height: 12),
-                                Text(
-                                  AppStrings.t(ref, 'কোনো প্রশ্ন পাওয়া যায়নি',
-                                      'No questions found'),
-                                  style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  AppStrings.t(
-                                    ref,
-                                    'অনুসন্ধান শব্দ বা ফিল্টার পরিবর্তন করে আবার চেষ্টা করুন।',
-                                    'Try changing your search query or filters.',
+                            child: Padding(
+                              padding: const EdgeInsets.all(32.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(LucideIcons.searchX, size: 36, color: Colors.grey),
                                   ),
-                                  style: const TextStyle(
-                                      fontSize: 13, color: Colors.grey),
-                                ),
-                                const SizedBox(height: 16),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    notifier.resetAllFilters();
-                                  },
-                                  child: Text(AppStrings.t(
-                                      ref, 'সব ফিল্টার মুছুন', 'Clear All Filters')),
-                                ),
-                              ],
+                                  const SizedBox(height: 14),
+                                  Text(
+                                    AppStrings.t(ref, 'কোনো প্রশ্ন পাওয়া যায়নি', 'No questions found'),
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    AppStrings.t(
+                                      ref,
+                                      'অনুসন্ধান শব্দ বা ফিল্টার পরিবর্তন করে আবার চেষ্টা করুন।',
+                                      'Try changing your search query or filters.',
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primary,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      notifier.resetAllFilters();
+                                    },
+                                    child: Text(AppStrings.t(ref, 'সব ফিল্টার মুছুন', 'Clear Filters')),
+                                  ),
+                                ],
+                              ),
                             ),
                           )
                         : RefreshIndicator(
-                            onRefresh: notifier.loadInitialQuestions,
-                            child: ListView.separated(
+                            onRefresh: () async {
+                              await notifier.loadInitialQuestions();
+                            },
+                            child: ListView.builder(
                               controller: _scrollController,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 12),
-                              itemCount: filteredList.length +
-                                  (state.isLoadingMore ? 1 : 0),
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(height: 14),
+                              padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
+                              itemCount: filteredList.length + (state.hasMore ? 1 : 0),
                               itemBuilder: (context, index) {
                                 if (index == filteredList.length) {
-                                  return const Padding(
-                                    padding: EdgeInsets.all(16.0),
-                                    child: Center(
-                                      child: CircularProgressIndicator(),
+                                  return const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 20),
+                                      child: SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      ),
                                     ),
                                   );
                                 }
 
                                 final question = filteredList[index];
-                                final isBookmarked =
-                                    state.bookmarkedIds.contains(question.id);
-                                final recordedAnswer =
-                                    state.userAnswers[question.id];
-
-                                // Find subject name
-                                final subject = state.subjects.firstWhere(
-                                  (s) => s['id'] == question.subjectId,
-                                  orElse: () => {
-                                    'name': question.subjectId,
-                                    'nameEn': question.subjectId,
-                                  },
-                                );
-                                final subjectDisplay = isBn
-                                    ? (subject['name'] as String?)
-                                    : ((subject['nameEn'] as String?)
-                                                ?.isNotEmpty ==
-                                            true
-                                        ? subject['nameEn'] as String?
-                                        : subject['name'] as String?);
+                                final isBookmarked = state.bookmarkedIds.contains(question.id);
+                                final recordedAnswer = state.userAnswers[question.id];
 
                                 return StudyQuestionCard(
                                   key: ValueKey(question.id),
-                                  question: question,
                                   index: index,
-                                  subjectName: subjectDisplay,
+                                  question: question,
                                   isBookmarked: isBookmarked,
-                                  initialSelectedOptionId: recordedAnswer,
                                   defaultRevealed: state.autoRevealAll,
-                                  onToggleBookmark: () =>
-                                      notifier.toggleBookmark(question.id),
-                                  onAnswerSelect: (optId) =>
-                                      notifier.recordAnswer(question.id, optId),
+                                  initialSelectedOptionId: recordedAnswer,
+                                  onAnswerSelect: (optId) {
+                                    notifier.recordAnswer(question.id, optId);
+                                  },
+                                  onToggleBookmark: () async {
+                                    await notifier.toggleBookmark(question.id);
+                                  },
                                 );
                               },
                             ),
                           ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildDifficultyFilterPill({
-    required WidgetRef ref,
-    required bool isDark,
-    required String value,
-    required String selectedValue,
-    required String label,
-    required Color activeColor,
-    required VoidCallback onTap,
-  }) {
-    final isSelected = selectedValue == value;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? activeColor.withValues(alpha: 0.14)
-              : (isDark ? AppColors.cardDark : AppColors.cardLight),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? activeColor
-                : (isDark ? AppColors.borderDark : AppColors.borderLight),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected
-                ? activeColor
-                : (isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight),
-          ),
-        ),
       ),
     );
   }
