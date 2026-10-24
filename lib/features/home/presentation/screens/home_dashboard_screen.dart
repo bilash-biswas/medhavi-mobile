@@ -11,6 +11,7 @@ import 'package:medhavi_mobile/features/auth/presentation/controllers/auth_contr
 import 'package:medhavi_mobile/features/question_bank/presentation/controllers/question_bank_controller.dart';
 import 'package:medhavi_mobile/features/bookmarks/presentation/controllers/bookmarks_controller.dart';
 import 'package:medhavi_mobile/features/mistakes/presentation/controllers/mistakes_controller.dart';
+import 'package:medhavi_mobile/features/notifications/presentation/controllers/notifications_controller.dart';
 
 class HomeDashboardScreen extends ConsumerWidget {
   const HomeDashboardScreen({super.key});
@@ -23,6 +24,7 @@ class HomeDashboardScreen extends ConsumerWidget {
     final qbState = ref.watch(questionBankControllerProvider);
     final bmState = ref.watch(bookmarksControllerProvider);
     final mbState = ref.watch(mistakesControllerProvider);
+    final notifState = ref.watch(notificationsControllerProvider);
 
     return Scaffold(
       appBar: AutoHideAppBar(
@@ -67,6 +69,45 @@ class HomeDashboardScreen extends ConsumerWidget {
             ],
           ),
           actions: [
+            // Notification Bell Icon with Live Unread Badge
+            IconButton(
+              tooltip: 'নোটিফিকেশন',
+              onPressed: () => context.push('/notifications'),
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(LucideIcons.bell, size: 20),
+                  if (notifState.unreadCount > 0)
+                    Positioned(
+                      right: -5,
+                      top: -5,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 1),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${notifState.unreadCount}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
             // Theme Toggle Icon
             IconButton(
               tooltip: 'থিম পরিবর্তন',
@@ -132,6 +173,83 @@ class HomeDashboardScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 0. Pinned Admin Notification / Streak Alert Banner
+            if (notifState.pinnedNotifications.isNotEmpty) ...[
+              for (final pin in notifState.pinnedNotifications.take(2))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () {
+                      ref
+                          .read(notificationsControllerProvider.notifier)
+                          .markAsRead(pin.id);
+                      context.go(pin.mobileRoute);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.primary.withValues(alpha: 0.18)
+                            : AppColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.45),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              LucideIcons.bell,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  pin.title,
+                                  style: const TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  pin.body,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color:
+                                        isDark ? Colors.white70 : Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            LucideIcons.chevronRight,
+                            size: 18,
+                            color: AppColors.primary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+
             // 1. Hero Banner
             Container(
               width: double.infinity,

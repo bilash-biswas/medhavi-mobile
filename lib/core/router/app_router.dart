@@ -20,6 +20,7 @@ import 'package:medhavi_mobile/features/practice/presentation/screens/practice_h
 import 'package:medhavi_mobile/features/practice/presentation/screens/practice_session_screen.dart';
 import 'package:medhavi_mobile/features/mistakes/presentation/screens/mistake_bank_screen.dart';
 import 'package:medhavi_mobile/features/bookmarks/presentation/screens/bookmarks_screen.dart';
+import 'package:medhavi_mobile/features/notifications/presentation/screens/notifications_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -156,6 +157,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/practice/session',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const PracticeSessionScreen(),
+      ),
+
+      // 11b. Notifications Center Screen
+      GoRoute(
+        path: '/notifications',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const NotificationsScreen(),
       ),
 
       // 12. Main Application Shell (With persistent bottom nav bar)
