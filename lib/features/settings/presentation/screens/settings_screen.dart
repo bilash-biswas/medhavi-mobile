@@ -3,11 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/localization/app_strings.dart';
-import '../../../../core/localization/locale_controller.dart';
-import '../../../../core/services/preferences_service.dart';
-import '../../../../core/theme/theme_controller.dart';
+import 'package:medhavi_mobile/core/constants/app_colors.dart';
+import 'package:medhavi_mobile/core/localization/app_strings.dart';
+import 'package:medhavi_mobile/core/localization/locale_controller.dart';
+import 'package:medhavi_mobile/core/services/preferences_service.dart';
+import 'package:medhavi_mobile/core/theme/theme_controller.dart';
+import 'package:medhavi_mobile/features/app_update/presentation/controllers/app_update_controller.dart';
+import 'package:medhavi_mobile/features/app_update/presentation/widgets/app_update_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -425,6 +427,100 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                       ),
                     ],
+                  ),
+                  const Divider(height: 24),
+                  InkWell(
+                    onTap: () async {
+                      final scaffoldMessenger = ScaffoldMessenger.of(context);
+                      scaffoldMessenger.showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            AppStrings.t(ref, 'আপডেট চেক করা হচ্ছে...',
+                                'Checking for updates...'),
+                            style: GoogleFonts.hindSiliguri(),
+                          ),
+                          duration: const Duration(seconds: 1),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+
+                      final info = await ref
+                          .read(appUpdateControllerProvider.notifier)
+                          .checkForUpdate();
+
+                      if (!context.mounted) return;
+
+                      if (info != null) {
+                        AppUpdateDialog.show(context, info);
+                      } else {
+                        scaffoldMessenger.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              AppStrings.t(
+                                ref,
+                                'আপনার অ্যাপটি লেটেস্ট সংস্করণে রয়েছে (v1.0.0) ✓',
+                                'Your app is already up to date (v1.0.0) ✓',
+                              ),
+                              style: GoogleFonts.hindSiliguri(
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            backgroundColor: AppColors.success,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(10),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              LucideIcons.refreshCw,
+                              color: AppColors.primary,
+                              size: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  AppStrings.t(ref, 'অ্যাপের নতুন আপডেট চেক করুন',
+                                      'Check for App Updates'),
+                                  style: GoogleFonts.hindSiliguri(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                Text(
+                                  AppStrings.t(
+                                    ref,
+                                    'ইন-অ্যাপ স্বয়ংক্রিয় ডাউনলোড ও ইনস্টল',
+                                    'In-app automatic download & install',
+                                  ),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark
+                                        ? AppColors.textSecondaryDark
+                                        : AppColors.textSecondaryLight,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(LucideIcons.chevronRight,
+                              size: 16, color: Colors.grey),
+                        ],
+                      ),
+                    ),
                   ),
                   const Divider(height: 24),
                   Row(

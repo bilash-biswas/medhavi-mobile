@@ -14,12 +14,36 @@ import 'package:medhavi_mobile/features/question_bank/presentation/controllers/q
 import 'package:medhavi_mobile/features/bookmarks/presentation/controllers/bookmarks_controller.dart';
 import 'package:medhavi_mobile/features/mistakes/presentation/controllers/mistakes_controller.dart';
 import 'package:medhavi_mobile/features/notifications/presentation/controllers/notifications_controller.dart';
+import 'package:medhavi_mobile/features/app_update/presentation/controllers/app_update_controller.dart';
+import 'package:medhavi_mobile/features/app_update/presentation/widgets/app_update_dialog.dart';
 
-class HomeDashboardScreen extends ConsumerWidget {
+class HomeDashboardScreen extends ConsumerStatefulWidget {
   const HomeDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeDashboardScreen> createState() => _HomeDashboardScreenState();
+}
+
+class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAutoUpdate();
+    });
+  }
+
+  Future<void> _checkAutoUpdate() async {
+    final info = await ref
+        .read(appUpdateControllerProvider.notifier)
+        .checkForUpdate(silent: true);
+    if (info != null && mounted) {
+      AppUpdateDialog.show(context, info);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isBn = AppStrings.isBn(ref);
     final currentUser = ref.watch(currentUserProvider);
