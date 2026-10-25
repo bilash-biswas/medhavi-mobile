@@ -72,6 +72,18 @@ class MainActivity : FlutterActivity() {
                             result.success(false)
                         }
                     }
+                    "getApkFilePath" -> {
+                        try {
+                            val dir = File(cacheDir, "updates")
+                            if (!dir.exists()) {
+                                dir.mkdirs()
+                            }
+                            val file = File(dir, "medhavi_update.apk")
+                            result.success(file.absolutePath)
+                        } catch (e: Exception) {
+                            result.error("PATH_ERROR", e.localizedMessage, null)
+                        }
+                    }
                     "installApk" -> {
                         val filePath = call.argument<String>("filePath")
                         if (filePath == null) {

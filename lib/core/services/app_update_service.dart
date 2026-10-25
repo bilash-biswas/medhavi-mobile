@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:medhavi_mobile/core/models/app_version_info.dart';
 
 class AppUpdateService {
@@ -53,14 +55,45 @@ class AppUpdateService {
     return null;
   }
 
+  /// Resolves a secure, writable path inside the app's cache directory
+  /// that matches Android's FileProvider configuration
+  Future<String> _resolveApkFilePath() async {
+    if (Platform.isAndroid) {
+      try {
+        final path = await _channel.invokeMethod<String>('getApkFilePath');
+        if (path != null && path.isNotEmpty) {
+          final file = File(path);
+          if (!await file.parent.exists()) {
+            await file.parent.create(recursive: true);
+          }
+          return path;
+        }
+      } catch (e) {
+        debugPrint('Notice: Native getApkFilePath channel unavailable ($e), falling back to path_provider');
+      }
+    }
+
+    try {
+      final cacheDir = await getTemporaryDirectory();
+      final updatesDir = Directory('${cacheDir.path}/updates');
+      if (!await updatesDir.exists()) {
+        await updatesDir.create(recursive: true);
+      }
+      return '${updatesDir.path}/medhavi_update.apk';
+    } catch (_) {
+      final fallbackDir = Directory.systemTemp;
+      return '${fallbackDir.path}/medhavi_update.apk';
+    }
+  }
+
   /// Download the APK from the remote URL with automatic retry and HTTP Range resume support
   Future<String> downloadApk(
     String apkUrl, {
     required void Function(int receivedBytes, int totalBytes) onProgress,
     void Function(String message)? onStatusChange,
   }) async {
-    final tempDir = Directory.systemTemp;
-    final apkFile = File('${tempDir.path}/medhavi_update.apk');
+    final filePath = await _resolveApkFilePath();
+    final apkFile = File(filePath);
 
     int totalBytes = 0;
     int receivedBytes = 0;
@@ -144,8 +177,9 @@ class AppUpdateService {
         }
 
         return apkFile.path;
-      } catch (e) {
+      } catch (e, stack) {
         retries++;
+        debugPrint('APK download error attempt $retries: $e\n$stack');
         try {
           await sink?.flush();
           await sink?.close();
