@@ -10,6 +10,7 @@ import 'package:medhavi_mobile/core/services/preferences_service.dart';
 import 'package:medhavi_mobile/core/theme/theme_controller.dart';
 import 'package:medhavi_mobile/features/app_update/presentation/controllers/app_update_controller.dart';
 import 'package:medhavi_mobile/features/app_update/presentation/widgets/app_update_dialog.dart';
+import 'package:medhavi_mobile/core/services/app_update_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -417,9 +418,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Text(
-                          'v1.0.0+1',
-                          style: TextStyle(
+                        child: Text(
+                          'v${AppUpdateService.currentVersion}+${AppUpdateService.currentBuildNumber}',
+                          style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             color: AppColors.primary,
@@ -458,8 +459,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             content: Text(
                               AppStrings.t(
                                 ref,
-                                'আপনার অ্যাপটি লেটেস্ট সংস্করণে রয়েছে (v1.0.0) ✓',
-                                'Your app is already up to date (v1.0.0) ✓',
+                                'আপনার অ্যাপটি লেটেস্ট সংস্করণে রয়েছে (v${AppUpdateService.currentVersion}) ✓',
+                                'Your app is already up to date (v${AppUpdateService.currentVersion}) ✓',
                               ),
                               style: GoogleFonts.hindSiliguri(
                                   fontWeight: FontWeight.w600),

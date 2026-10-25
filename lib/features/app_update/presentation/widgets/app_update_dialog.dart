@@ -28,6 +28,7 @@ class AppUpdateDialog extends ConsumerWidget {
     final updateState = ref.watch(appUpdateControllerProvider);
     final isDownloading = updateState.status == AppUpdateStatus.downloading;
     final isReady = updateState.status == AppUpdateStatus.readyToInstall;
+    final hasError = updateState.status == AppUpdateStatus.error;
 
     final progressPct = (updateState.downloadProgress * 100).toInt();
     final downloadedMb =
@@ -153,50 +154,124 @@ class AppUpdateDialog extends ConsumerWidget {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
-              // Downloading Progress Bar
+              // Downloading Progress Bar & Reconnecting Status
               if (isDownloading) ...[
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      isBn ? 'ডাউনলোড হচ্ছে...' : 'Downloading update...',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                    ),
-                    Text(
-                      isBn
-                          ? '${BengaliNumeralConverter.toBengaliNumber(progressPct)}% ($downloadedMb / $totalMb MB)'
-                          : '$progressPct% ($downloadedMb / $totalMb MB)',
+                      updateState.statusMessage ??
+                          (isBn ? 'ডাউনলোড হচ্ছে...' : 'Downloading update...'),
                       style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
+                          fontSize: 11, fontWeight: FontWeight.w600),
                     ),
+                    if (updateState.totalBytes > 0)
+                      Text(
+                        isBn
+                            ? '${BengaliNumeralConverter.toBengaliNumber(progressPct)}% ($downloadedMb / $totalMb MB)'
+                            : '$progressPct% ($downloadedMb / $totalMb MB)',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: LinearProgressIndicator(
-                    value: updateState.downloadProgress,
+                    value: updateState.downloadProgress > 0
+                        ? updateState.downloadProgress
+                        : null,
                     backgroundColor: isDark ? Colors.white10 : Colors.black12,
                     valueColor:
                         const AlwaysStoppedAnimation<Color>(AppColors.primary),
                     minHeight: 8,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
               ],
 
-              // Error display
-              if (updateState.status == AppUpdateStatus.error) ...[
-                Text(
-                  updateState.errorMessage ?? 'Error updating app',
-                  style: const TextStyle(fontSize: 11, color: AppColors.error),
+              // Friendly Error Notice
+              if (hasError) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AppColors.error.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(LucideIcons.wifiOff,
+                              size: 14, color: AppColors.error),
+                          const SizedBox(width: 6),
+                          Text(
+                            isBn
+                                ? 'ইন্টারনেট সংযোগ বিঘ্নিত হয়েছে'
+                                : 'Network Connection Interrupted',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isBn
+                            ? 'মোবাইল নেটওয়ার্ক সমস্যার কারণে সংযোগ ড্রপ হয়েছে। পুনরায় চেষ্টা করুন (যেখান থেকে থেমেছিল সেখান থেকেই শুরু হবে) অথবা সরাসরি ব্রাউজারে ডাউনলোড করুন।'
+                            : 'Connection dropped. Tap Retry (resumes from current progress) or download directly via browser.',
+                        style: TextStyle(
+                          fontSize: 11,
+                          height: 1.4,
+                          color: isDark ? Colors.white70 : Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
+
+                // Browser Fallback Button
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      ref
+                          .read(appUpdateControllerProvider.notifier)
+                          .openBrowserDownload();
+                    },
+                    icon: const Icon(LucideIcons.globe, size: 14),
+                    label: Text(
+                      isBn
+                          ? 'ব্রাউজারে সরাসরি ডাউনলোড করুন'
+                          : 'Download Directly in Browser',
+                      style: GoogleFonts.hindSiliguri(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
               ],
 
               // Action Buttons
@@ -244,10 +319,12 @@ class AppUpdateDialog extends ConsumerWidget {
                             },
                       child: Text(
                         isDownloading
-                          ? (isBn ? 'ডাউনলোড হচ্ছে...' : 'Downloading...')
-                          : isReady
-                              ? (isBn ? 'ইনস্টল করুন ➔' : 'Install Now ➔')
-                              : (isBn ? 'এখনই আপডেট করুন' : 'Update Now'),
+                            ? (isBn ? 'ডাউনলোড হচ্ছে...' : 'Downloading...')
+                            : isReady
+                                ? (isBn ? 'ইনস্টল করুন ➔' : 'Install Now ➔')
+                                : hasError
+                                    ? (isBn ? 'পুনরায় চেষ্টা করুন' : 'Retry Download')
+                                    : (isBn ? 'এখনই আপডেট করুন' : 'Update Now'),
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,

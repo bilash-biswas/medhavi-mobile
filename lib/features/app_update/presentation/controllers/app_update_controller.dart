@@ -20,6 +20,7 @@ class AppUpdateState {
   final int totalBytes;
   final String? downloadedPath;
   final String? errorMessage;
+  final String? statusMessage;
 
   const AppUpdateState({
     this.status = AppUpdateStatus.idle,
@@ -29,6 +30,7 @@ class AppUpdateState {
     this.totalBytes = 0,
     this.downloadedPath,
     this.errorMessage,
+    this.statusMessage,
   });
 
   bool get isUpdateAvailable =>
@@ -43,6 +45,7 @@ class AppUpdateState {
     int? totalBytes,
     String? downloadedPath,
     String? errorMessage,
+    String? statusMessage,
   }) {
     return AppUpdateState(
       status: status ?? this.status,
@@ -52,6 +55,7 @@ class AppUpdateState {
       totalBytes: totalBytes ?? this.totalBytes,
       downloadedPath: downloadedPath ?? this.downloadedPath,
       errorMessage: errorMessage ?? this.errorMessage,
+      statusMessage: statusMessage ?? this.statusMessage,
     );
   }
 }
@@ -108,8 +112,8 @@ class AppUpdateController extends Notifier<AppUpdateState> {
     state = state.copyWith(
       status: AppUpdateStatus.downloading,
       downloadProgress: 0.0,
-      receivedBytes: 0,
-      totalBytes: 0,
+      errorMessage: null,
+      statusMessage: null,
     );
 
     try {
@@ -122,13 +126,18 @@ class AppUpdateController extends Notifier<AppUpdateState> {
             downloadProgress: progress,
             receivedBytes: received,
             totalBytes: total,
+            statusMessage: null,
           );
+        },
+        onStatusChange: (msg) {
+          state = state.copyWith(statusMessage: msg);
         },
       );
 
       state = state.copyWith(
         status: AppUpdateStatus.readyToInstall,
         downloadedPath: path,
+        statusMessage: 'ডাউনলোড সম্পন্ন! ইনস্টলেশন প্রস্তুত...',
       );
 
       // Trigger installation
@@ -136,7 +145,7 @@ class AppUpdateController extends Notifier<AppUpdateState> {
     } catch (e) {
       state = state.copyWith(
         status: AppUpdateStatus.error,
-        errorMessage: 'ডাউনলোড ব্যর্থ হয়েছে: $e',
+        errorMessage: e.toString().replaceFirst('Exception: ', '').replaceFirst('HttpException: ', ''),
       );
     }
   }
@@ -158,6 +167,20 @@ class AppUpdateController extends Notifier<AppUpdateState> {
         errorMessage: 'ইনস্টলেশন শুরু করতে সমস্যা হয়েছে: $e',
       );
     }
+  }
+
+  /// Open external browser download page
+  Future<void> openBrowserDownload() async {
+    final info = state.versionInfo;
+    final url = info?.apkUrl ?? 'https://medhavi-nine.vercel.app/download';
+    await _service.openBrowserDownload(url);
+  }
+
+  /// Download via Android native system DownloadManager
+  Future<void> downloadViaSystemManager() async {
+    final info = state.versionInfo;
+    final url = info?.apkUrl ?? 'https://medhavi-nine.vercel.app/downloads/medhavi-app.apk';
+    await _service.downloadViaSystemManager(url);
   }
 }
 

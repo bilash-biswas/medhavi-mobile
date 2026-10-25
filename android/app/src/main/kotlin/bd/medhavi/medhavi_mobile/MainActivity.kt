@@ -104,6 +104,36 @@ class MainActivity : FlutterActivity() {
                             result.error("INSTALL_ERROR", e.localizedMessage, e.stackTraceToString())
                         }
                     }
+                    "openBrowserDownload" -> {
+                        val url = call.argument<String>("url") ?: "https://medhavi-nine.vercel.app/download"
+                        try {
+                            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            startActivity(browserIntent)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.error("BROWSER_ERROR", e.localizedMessage, null)
+                        }
+                    }
+                    "downloadViaSystemManager" -> {
+                        val url = call.argument<String>("url") ?: "https://medhavi-nine.vercel.app/downloads/medhavi-app.apk"
+                        val title = call.argument<String>("title") ?: "মেধাবী আপডেট (Medhavi Update)"
+                        try {
+                            val request = android.app.DownloadManager.Request(Uri.parse(url)).apply {
+                                setTitle(title)
+                                setDescription("মেধাবী অ্যাপের নতুন সংস্করণ ডাউনলোড হচ্ছে...")
+                                setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                setDestinationInExternalPublicDir(android.os.Environment.DIRECTORY_DOWNLOADS, "medhavi-app.apk")
+                                setMimeType("application/vnd.android.package-archive")
+                            }
+                            val dm = getSystemService(Context.DOWNLOAD_SERVICE) as android.app.DownloadManager
+                            dm.enqueue(request)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.error("DM_ERROR", e.localizedMessage, null)
+                        }
+                    }
                     else -> result.notImplemented()
                 }
             }
