@@ -77,6 +77,42 @@ class LeaderboardController extends Notifier<LeaderboardState> {
     );
   }
 
+  /// Pull-to-refresh handler: refreshes user analytics and forces leaderboard re-calculation
+  Future<void> refresh() async {
+    state = state.copyWith(isLoading: true);
+    await ref.read(analyticsControllerProvider.notifier).refreshStats();
+    final updatedAnalytics = ref.read(analyticsControllerProvider);
+    final user = ref.read(currentUserProvider);
+    final userName = user?.displayName?.isNotEmpty == true
+        ? user!.displayName!
+        : 'আপনি (You)';
+    final realSolved = updatedAnalytics.totalSolved;
+    final realScore =
+        (updatedAnalytics.totalCorrect * 10) + (updatedAnalytics.streakDays * 20);
+    final baseEntries = _getEntriesFor(state.timeframe);
+    int computedRank = baseEntries.length + 1;
+    for (int i = 0; i < baseEntries.length; i++) {
+      if (realScore >= baseEntries[i].score) {
+        computedRank = i + 1;
+        break;
+      }
+    }
+    state = state.copyWith(
+      entries: baseEntries,
+      isLoading: false,
+      userEntry: LeaderboardEntry(
+        rank: computedRank,
+        userId: user?.uid ?? 'current_user',
+        name: userName,
+        targetBatch: '৪৭তম বিসিএস ক্যাডার',
+        solvedCount: realSolved,
+        score: realScore,
+        streakDays: updatedAnalytics.streakDays,
+        isCurrentUser: true,
+      ),
+    );
+  }
+
   List<LeaderboardEntry> _getEntriesFor(LeaderboardTimeframe timeframe) {
     switch (timeframe) {
       case LeaderboardTimeframe.weekly:

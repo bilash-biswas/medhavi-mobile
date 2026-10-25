@@ -339,6 +339,60 @@ class NotificationsController extends Notifier<NotificationsState> {
     final box = await Hive.openBox(_boxName);
     await box.put('read_ids', nextRead.toList());
   }
+
+  /// Pull-to-refresh handler to force re-fetch notifications and re-evaluate streak
+  Future<void> refresh() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+        if (doc.exists) {
+          final data = doc.data() ?? {};
+          final rawStreak = data['currentStreak'] ?? data['streak'] ?? 0;
+          final storedStreak = rawStreak is num
+              ? rawStreak.toInt()
+              : int.tryParse('$rawStreak') ?? 0;
+          final lastPracticeDate = data['lastPracticeDate'] as String?;
+
+          final effectiveStreak = _evaluateEffectiveStreak(
+            storedStreak: storedStreak,
+            lastPracticeDate: lastPracticeDate,
+            uid: currentUser.uid,
+          );
+
+          if (effectiveStreak != state.userStreak) {
+            state = state.copyWith(userStreak: effectiveStreak);
+          }
+        }
+      } catch (e) {
+        debugPrint('Error refreshing user streak in notifications: $e');
+      }
+    }
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('notifications')
+          .orderBy('createdAt', descending: true)
+          .limit(30)
+          .get();
+
+      final allItems =
+          snapshot.docs.map((d) => AppNotificationModel.fromDoc(d)).toList();
+
+      final matching =
+          allItems.where((item) => item.matchesStreak(state.userStreak)).toList();
+
+      state = state.copyWith(
+        notifications: matching,
+        isLoading: false,
+      );
+    } catch (e) {
+      debugPrint('Error refreshing notifications list: $e');
+    }
+  }
 }
 
 final notificationsControllerProvider =

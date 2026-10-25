@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,6 +7,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../controllers/live_quiz_controller.dart';
+import 'package:medhavi_mobile/features/notifications/presentation/controllers/notifications_controller.dart';
+import 'package:medhavi_mobile/features/analytics/presentation/controllers/analytics_controller.dart';
 
 class LiveQuizHubScreen extends ConsumerWidget {
   const LiveQuizHubScreen({super.key});
@@ -22,9 +25,19 @@ class LiveQuizHubScreen extends ConsumerWidget {
           style: GoogleFonts.hindSiliguri(fontWeight: FontWeight.bold),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Column(
+      body: RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: () async {
+          HapticFeedback.mediumImpact();
+          await Future.wait([
+            ref.read(analyticsControllerProvider.notifier).refreshStats(),
+            ref.read(notificationsControllerProvider.notifier).refresh(),
+          ]);
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. Featured Live Mega Exam Card
@@ -257,7 +270,8 @@ class LiveQuizHubScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 }
 

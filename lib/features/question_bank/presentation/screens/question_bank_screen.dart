@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -812,113 +813,157 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
             ),
           ),
 
-          // 3. Question Feed
+          // 3. Question Feed with Pull-to-Refresh
           Expanded(
-            child: state.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : state.errorMessage != null && filteredList.isEmpty
-                    ? Center(
-                        child: Padding(
+            child: RefreshIndicator(
+              color: AppColors.primary,
+              onRefresh: () async {
+                HapticFeedback.mediumImpact();
+                await notifier.loadInitialQuestions();
+              },
+              child: state.isLoading && filteredList.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : state.errorMessage != null && filteredList.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.all(24.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(LucideIcons.alertTriangle, size: 40, color: Colors.amber),
-                              const SizedBox(height: 12),
-                              Text(
-                                AppStrings.t(ref, 'প্রশ্ন লোড করতে সমস্যা হয়েছে', 'Failed to load questions'),
-                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                state.errorMessage!,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(fontSize: 12, color: Colors.grey),
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton.icon(
-                                onPressed: notifier.loadInitialQuestions,
-                                icon: const Icon(LucideIcons.refreshCw, size: 16),
-                                label: Text(AppStrings.t(ref, 'পুনরায় চেষ্টা করুন', 'Retry')),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : filteredList.isEmpty
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(32.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
-                                      shape: BoxShape.circle,
+                          children: [
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.55,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(LucideIcons.alertTriangle,
+                                        size: 40, color: Colors.amber),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      AppStrings.t(
+                                          ref,
+                                          'প্রশ্ন লোড করতে সমস্যা হয়েছে',
+                                          'Failed to load questions'),
+                                      style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold),
                                     ),
-                                    child: const Icon(LucideIcons.searchX, size: 36, color: Colors.grey),
-                                  ),
-                                  const SizedBox(height: 14),
-                                  Text(
-                                    AppStrings.t(ref, 'কোনো প্রশ্ন পাওয়া যায়নি', 'No questions found'),
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    AppStrings.t(
-                                      ref,
-                                      'অনুসন্ধান শব্দ বা ফিল্টার পরিবর্তন করে আবার চেষ্টা করুন।',
-                                      'Try changing your search query or filters.',
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      state.errorMessage!,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                          fontSize: 12, color: Colors.grey),
                                     ),
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primary,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
+                                    const SizedBox(height: 16),
+                                    ElevatedButton.icon(
+                                      onPressed: notifier.loadInitialQuestions,
+                                      icon: const Icon(LucideIcons.refreshCw,
+                                          size: 16),
+                                      label: Text(AppStrings.t(
+                                          ref, 'পুনরায় চেষ্টা করুন', 'Retry')),
                                     ),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      notifier.resetAllFilters();
-                                    },
-                                    child: Text(AppStrings.t(ref, 'সব ফিল্টার মুছুন', 'Clear Filters')),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: () async {
-                              await notifier.loadInitialQuestions();
-                            },
-                            child: ListView.builder(
+                          ],
+                        )
+                      : filteredList.isEmpty
+                          ? ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.all(32.0),
+                              children: [
+                                SizedBox(
+                                  height:
+                                      MediaQuery.of(context).size.height * 0.55,
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(16),
+                                          decoration: BoxDecoration(
+                                            color: isDark
+                                                ? Colors.white10
+                                                : const Color(0xFFF1F5F9),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(LucideIcons.searchX,
+                                              size: 36, color: Colors.grey),
+                                        ),
+                                        const SizedBox(height: 14),
+                                        Text(
+                                          AppStrings.t(
+                                              ref,
+                                              'কোনো প্রশ্ন পাওয়া যায়নি',
+                                              'No questions found'),
+                                          style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          AppStrings.t(
+                                            ref,
+                                            'অনুসন্ধান শব্দ বা ফিল্টার পরিবর্তন করে আবার চেষ্টা করুন।',
+                                            'Try changing your search query or filters.',
+                                          ),
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                              fontSize: 12, color: Colors.grey),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppColors.primary,
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            _searchController.clear();
+                                            notifier.resetAllFilters();
+                                          },
+                                          child: Text(AppStrings.t(ref,
+                                              'সব ফিল্টার মুছুন',
+                                              'Clear Filters')),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(),
                               controller: _scrollController,
-                              padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
-                              itemCount: filteredList.length + (state.hasMore ? 1 : 0),
+                              padding:
+                                  const EdgeInsets.fromLTRB(16, 12, 16, 80),
+                              itemCount: filteredList.length +
+                                  (state.hasMore ? 1 : 0),
                               itemBuilder: (context, index) {
                                 if (index == filteredList.length) {
                                   return const Center(
                                     child: Padding(
-                                      padding: EdgeInsets.symmetric(vertical: 20),
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 20),
                                       child: SizedBox(
                                         width: 24,
                                         height: 24,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2),
                                       ),
                                     ),
                                   );
                                 }
 
                                 final question = filteredList[index];
-                                final isBookmarked = state.bookmarkedIds.contains(question.id);
-                                final recordedAnswer = state.userAnswers[question.id];
+                                final isBookmarked =
+                                    state.bookmarkedIds.contains(question.id);
+                                final recordedAnswer =
+                                    state.userAnswers[question.id];
 
                                 return StudyQuestionCard(
                                   key: ValueKey(question.id),
@@ -936,7 +981,7 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                                 );
                               },
                             ),
-                          ),
+            ),
           ),
         ],
       ),

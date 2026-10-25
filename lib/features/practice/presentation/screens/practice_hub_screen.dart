@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -200,9 +201,20 @@ class PracticeHubScreen extends ConsumerWidget {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      body: RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: () async {
+          HapticFeedback.mediumImpact();
+          await Future.wait([
+            ref.read(questionBankControllerProvider.notifier).init(),
+            ref.read(bookmarksControllerProvider.notifier).loadBookmarks(),
+            ref.read(mistakesControllerProvider.notifier).loadMistakes(),
+          ]);
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. Featured Quick 20 Mixed Questions Launcher
@@ -607,7 +619,8 @@ class PracticeHubScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 }
 

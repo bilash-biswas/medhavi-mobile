@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -101,28 +102,36 @@ class LeaderboardScreen extends ConsumerWidget {
 
           // 2. Scrollable Body: Podium + Ranked List
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Column(
-                children: [
-                  // Top 3 Podium
-                  if (top3.length >= 3)
-                    _Top3Podium(top3: top3, isDark: isDark),
-                  const SizedBox(height: 16),
+            child: RefreshIndicator(
+              color: AppColors.primary,
+              onRefresh: () async {
+                HapticFeedback.mediumImpact();
+                await notifier.refresh();
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Column(
+                  children: [
+                    // Top 3 Podium
+                    if (top3.length >= 3)
+                      _Top3Podium(top3: top3, isDark: isDark),
+                    const SizedBox(height: 16),
 
-                  // 4th and beyond
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: remaining.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (context, index) {
-                      final item = remaining[index];
-                      return _RankCard(entry: item, isDark: isDark);
-                    },
-                  ),
-                  const SizedBox(height: 80), // Padding for sticky bottom
-                ],
+                    // 4th and beyond
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: remaining.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) {
+                        final item = remaining[index];
+                        return _RankCard(entry: item, isDark: isDark);
+                      },
+                    ),
+                    const SizedBox(height: 80), // Padding for sticky bottom
+                  ],
+                ),
               ),
             ),
           ),

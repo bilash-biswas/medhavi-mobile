@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -270,50 +271,64 @@ class _BookmarksScreenState extends ConsumerState<BookmarksScreen> {
 
           // 3. Bookmarked Questions List
           Expanded(
-            child: state.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : filteredList.isEmpty
-                    ? Center(
-                        child: Padding(
+            child: RefreshIndicator(
+              color: AppColors.primary,
+              onRefresh: () async {
+                HapticFeedback.mediumImpact();
+                await notifier.loadBookmarks();
+              },
+              child: state.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : filteredList.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.all(24.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color:
-                                      AppColors.primary.withValues(alpha: 0.08),
-                                  shape: BoxShape.circle,
+                          children: [
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.55,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary
+                                            .withValues(alpha: 0.08),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(LucideIcons.bookmark,
+                                          size: 40, color: AppColors.primary),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      AppStrings.t(
+                                          ref,
+                                          'কোনো বুকমার্ক করা প্রশ্ন নেই',
+                                          'No bookmarked questions yet'),
+                                      style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      AppStrings.t(
+                                        ref,
+                                        'প্রশ্ন ব্যাংকে পড়ার সময় বুকমার্ক আইকনে চাপ দিয়ে সংরক্ষণ করুন।',
+                                        'Tap the bookmark icon on any question card to save it here.',
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                          fontSize: 13, color: Colors.grey),
+                                    ),
+                                  ],
                                 ),
-                                child: const Icon(LucideIcons.bookmark,
-                                    size: 40, color: AppColors.primary),
                               ),
-                              const SizedBox(height: 16),
-                              Text(
-                                AppStrings.t(ref, 'কোনো বুকমার্ক করা প্রশ্ন নেই',
-                                    'No bookmarked questions yet'),
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                AppStrings.t(
-                                  ref,
-                                  'প্রশ্ন ব্যাংকে পড়ার সময় বুকমার্ক আইকনে চাপ দিয়ে সংরক্ষণ করুন।',
-                                  'Tap the bookmark icon on any question card to save it here.',
-                                ),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                    fontSize: 13, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : RefreshIndicator(
-                        onRefresh: notifier.loadBookmarks,
-                        child: ListView.separated(
+                            ),
+                          ],
+                        )
+                      : ListView.separated(
+                          physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 12),
                           itemCount: filteredList.length,
@@ -338,7 +353,7 @@ class _BookmarksScreenState extends ConsumerState<BookmarksScreen> {
                             );
                           },
                         ),
-                      ),
+            ),
           ),
         ],
       ),

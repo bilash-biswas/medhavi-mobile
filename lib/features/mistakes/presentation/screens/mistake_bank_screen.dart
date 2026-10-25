@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -268,53 +269,65 @@ class _MistakeBankScreenState extends ConsumerState<MistakeBankScreen> {
 
           // 3. Mistakes List
           Expanded(
-            child: state.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : filteredList.isEmpty
-                    ? Center(
-                        child: Padding(
+            child: RefreshIndicator(
+              color: AppColors.primary,
+              onRefresh: () async {
+                HapticFeedback.mediumImpact();
+                await notifier.loadMistakes();
+              },
+              child: state.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : filteredList.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.all(24.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color:
-                                      AppColors.emerald.withValues(alpha: 0.1),
-                                  shape: BoxShape.circle,
+                          children: [
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.55,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.emerald
+                                            .withValues(alpha: 0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(LucideIcons.checkCircle2,
+                                          size: 40, color: AppColors.emerald),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      AppStrings.t(
+                                        ref,
+                                        'দারুণ! আপনার কোনো ভুল প্রশ্ন জমা নেই',
+                                        'Great job! No pending mistakes',
+                                      ),
+                                      style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      AppStrings.t(
+                                        ref,
+                                        'অনুশীলন বা মক টেস্টে ভুল উত্তর দিলে তা এখানে স্বয়ংক্রিয়ভাবে জমা হবে।',
+                                        'Wrong answers from practice sessions automatically appear here for review.',
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                          fontSize: 13, color: Colors.grey),
+                                    ),
+                                  ],
                                 ),
-                                child: const Icon(LucideIcons.checkCircle2,
-                                    size: 40, color: AppColors.emerald),
                               ),
-                              const SizedBox(height: 16),
-                              Text(
-                                AppStrings.t(
-                                  ref,
-                                  'দারুণ! আপনার কোনো ভুল প্রশ্ন জমা নেই',
-                                  'Great job! No pending mistakes',
-                                ),
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                AppStrings.t(
-                                  ref,
-                                  'অনুশীলন বা মক টেস্টে ভুল উত্তর দিলে তা এখানে স্বয়ংক্রিয়ভাবে জমা হবে।',
-                                  'Wrong answers from practice sessions automatically appear here for review.',
-                                ),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                    fontSize: 13, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : RefreshIndicator(
-                        onRefresh: notifier.loadMistakes,
-                        child: ListView.separated(
+                            ),
+                          ],
+                        )
+                      : ListView.separated(
+                          physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 12),
                           itemCount: filteredList.length,
@@ -345,7 +358,7 @@ class _MistakeBankScreenState extends ConsumerState<MistakeBankScreen> {
                             );
                           },
                         ),
-                      ),
+            ),
           ),
         ],
       ),

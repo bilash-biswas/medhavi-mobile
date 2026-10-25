@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -35,59 +36,82 @@ class NotificationsScreen extends ConsumerWidget {
             ),
         ],
       ),
-      body: notifState.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : notifState.notifications.isEmpty
-              ? Center(
-                  child: Padding(
+      body: RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: () async {
+          HapticFeedback.mediumImpact();
+          await controller.refresh();
+        },
+        child: notifState.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : notifState.notifications.isEmpty
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            LucideIcons.bell,
-                            size: 36,
-                            color: AppColors.primary,
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.65,
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(alpha: 0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  LucideIcons.bell,
+                                  size: 36,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                isBn
+                                    ? 'এখনো কোনো নোটিফিকেশন নেই'
+                                    : 'No notifications yet',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                isBn
+                                    ? 'নতুন মক টেস্ট, প্রশ্ন সংযোজন এবং আপনার স্ট্রিক অ্যালার্ট এখানে দেখা যাবে।'
+                                    : 'New mock exams, question updates, and streak alerts will appear here.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: isDark ? Colors.white60 : Colors.black54,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                isBn
+                                    ? 'নতুন নোটিফিকেশন চেক করতে নিচে টানুন (Pull to refresh)'
+                                    : 'Pull down to check for new alerts',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.primary.withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          isBn
-                              ? 'এখনো কোনো নোটিফিকেশন নেই'
-                              : 'No notifications yet',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          isBn
-                              ? 'নতুন মক টেস্ট, প্রশ্ন সংযোজন এবং আপনার স্ট্রিক অ্যালার্ট এখানে দেখা যাবে।'
-                              : 'New mock exams, question updates, and streak alerts will appear here.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: isDark ? Colors.white60 : Colors.black54,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: notifState.notifications.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final item = notifState.notifications[index];
-                    final isUnread = !notifState.readIds.contains(item.id);
+                      ),
+                    ],
+                  )
+                : ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(16),
+                    itemCount: notifState.notifications.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final item = notifState.notifications[index];
+                      final isUnread = !notifState.readIds.contains(item.id);
 
                     return InkWell(
                       borderRadius: BorderRadius.circular(14),
@@ -217,6 +241,7 @@ class NotificationsScreen extends ConsumerWidget {
                     );
                   },
                 ),
+      ),
     );
   }
 
