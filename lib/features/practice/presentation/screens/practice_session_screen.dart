@@ -9,9 +9,27 @@ import 'package:medhavi_mobile/core/localization/app_strings.dart';
 import 'package:medhavi_mobile/core/utils/bengali_numeral_converter.dart';
 import 'package:medhavi_mobile/features/practice/presentation/controllers/practice_session_controller.dart';
 import 'package:medhavi_mobile/features/question_bank/presentation/controllers/question_bank_controller.dart';
+import 'package:medhavi_mobile/features/question_bank/domain/entities/question_entity.dart';
 
-class PracticeSessionScreen extends ConsumerWidget {
+enum ReviewFilter {
+  all,
+  incorrect,
+  correct,
+  unattempted,
+}
+
+class PracticeSessionScreen extends ConsumerStatefulWidget {
   const PracticeSessionScreen({super.key});
+
+  @override
+  ConsumerState<PracticeSessionScreen> createState() =>
+      _PracticeSessionScreenState();
+}
+
+class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
+  ReviewFilter _reviewFilter = ReviewFilter.all;
+  int _reviewIndex = 0;
+  bool _scorecardShown = false;
 
   String _formatTimer(WidgetRef ref, int seconds) {
     final m = seconds ~/ 60;
@@ -79,7 +97,7 @@ class PracticeSessionScreen extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      AppStrings.t(ref, 'প্রশ্ন তালিকা ও ন্যাভিগেশন', 'Question Palette & Navigation'),
+                      AppStrings.t(ref, 'প্রশ্ন তালিকা ও স্থিতি', 'Question Palette & Status'),
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     IconButton(
@@ -103,6 +121,7 @@ class PracticeSessionScreen extends ConsumerWidget {
                       final isAnswered = state.selectedAnswers.containsKey(q.id);
                       final isCorrect = isAnswered &&
                           state.selectedAnswers[q.id] == q.correctOptionId;
+                      final isMarked = state.markedQuestionIds.contains(q.id);
 
                       Color bg;
                       Color textColor;
@@ -130,7 +149,6 @@ class PracticeSessionScreen extends ConsumerWidget {
                         },
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
-                          alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: bg,
                             borderRadius: BorderRadius.circular(12),
@@ -138,18 +156,75 @@ class PracticeSessionScreen extends ConsumerWidget {
                                 ? Border.all(color: Colors.white, width: 2)
                                 : null,
                           ),
-                          child: Text(
-                            AppStrings.num(ref, idx + 1),
-                            style: TextStyle(
-                              color: textColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
+                          child: Stack(
+                            children: [
+                              Center(
+                                child: Text(
+                                  AppStrings.num(ref, idx + 1),
+                                  style: TextStyle(
+                                    color: textColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                              if (isMarked)
+                                Positioned(
+                                  top: 4,
+                                  right: 4,
+                                  child: Container(
+                                    width: 7,
+                                    height: 7,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.amber,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       );
                     },
                   ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _PaletteLegendItem(
+                      color: AppColors.primary,
+                      label: AppStrings.t(ref, 'চলতি', 'Current'),
+                    ),
+                    _PaletteLegendItem(
+                      color: AppColors.primary.withValues(alpha: 0.2),
+                      label: AppStrings.t(ref, 'উত্তর দেওয়া', 'Answered'),
+                    ),
+                    _PaletteLegendItem(
+                      color: isDark ? AppColors.cardDark : Colors.grey.shade200,
+                      label: AppStrings.t(ref, 'উত্তরহীন', 'Unanswered'),
+                    ),
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: AppColors.amber,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          AppStrings.t(ref, 'চিহ্নিত (Flag)', 'Flagged'),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? Colors.white60 : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -220,8 +295,8 @@ class PracticeSessionScreen extends ConsumerWidget {
                         )
                       : AppStrings.t(
                           ref,
-                          'আপনার নিয়মিত অনুশীলনের সার্বিক অগ্রগতি',
-                          'Your overall practice session performance',
+                          'আপনার সার্বিক অনুশীলনের ফলাফল ও বিশ্লেষণ',
+                          'Your overall practice results and analysis',
                         ),
                   style: TextStyle(
                     fontSize: 13,
@@ -323,9 +398,33 @@ class PracticeSessionScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
-                // Action Buttons
+                // Primary CTA: View Answer Analysis
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                    },
+                    icon: const Icon(LucideIcons.fileSearch, size: 18),
+                    label: Text(
+                      AppStrings.t(ref, 'উত্তর বিশ্লেষণ দেখুন ➔', 'View Answer Review ➔'),
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // Secondary Action Buttons
                 Row(
                   children: [
                     Expanded(
@@ -338,6 +437,11 @@ class PracticeSessionScreen extends ConsumerWidget {
                         ),
                         onPressed: () {
                           Navigator.of(ctx).pop();
+                          setState(() {
+                            _scorecardShown = false;
+                            _reviewIndex = 0;
+                            _reviewFilter = ReviewFilter.all;
+                          });
                           ref
                               .read(practiceSessionControllerProvider.notifier)
                               .restartPractice();
@@ -348,10 +452,8 @@ class PracticeSessionScreen extends ConsumerWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
@@ -375,13 +477,42 @@ class PracticeSessionScreen extends ConsumerWidget {
     );
   }
 
+  List<QuestionEntity> _getFilteredQuestions(PracticeSessionState state) {
+    switch (_reviewFilter) {
+      case ReviewFilter.all:
+        return state.questions;
+      case ReviewFilter.incorrect:
+        return state.incorrectQuestions;
+      case ReviewFilter.correct:
+        return state.correctQuestions;
+      case ReviewFilter.unattempted:
+        return state.unattemptedQuestions;
+    }
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final state = ref.watch(practiceSessionControllerProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final qbState = ref.watch(questionBankControllerProvider);
 
-    if (state.isLoading || (state.questions.isEmpty && state.errorMessage == null)) {
+    // Auto-trigger scorecard modal when session completes (e.g. from timer or auto-submit)
+    ref.listen<PracticeSessionState>(practiceSessionControllerProvider,
+        (previous, next) {
+      if ((previous == null || !previous.isCompleted) &&
+          next.isCompleted &&
+          !_scorecardShown) {
+        _scorecardShown = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _showScorecardModal(context, ref);
+          }
+        });
+      }
+    });
+
+    if (state.isLoading ||
+        (state.questions.isEmpty && state.errorMessage == null)) {
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
@@ -439,7 +570,8 @@ class PracticeSessionScreen extends ConsumerWidget {
                 Text(
                   state.errorMessage!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  style:
+                      const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
@@ -454,6 +586,543 @@ class PracticeSessionScreen extends ConsumerWidget {
       );
     }
 
+    // =========================================================================
+    // MODE A: ANSWER REVIEW MODE (Session Completed)
+    // =========================================================================
+    if (state.isCompleted) {
+      final filteredQuestions = _getFilteredQuestions(state);
+      final hasQuestions = filteredQuestions.isNotEmpty;
+      final safeReviewIndex = hasQuestions
+          ? _reviewIndex.clamp(0, filteredQuestions.length - 1)
+          : 0;
+      final reviewQuestion =
+          hasQuestions ? filteredQuestions[safeReviewIndex] : null;
+      final isBookmarked = reviewQuestion != null &&
+          qbState.bookmarkedIds.contains(reviewQuestion.id);
+
+      return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(LucideIcons.arrowLeft),
+            onPressed: () => context.pop(),
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                state.title,
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                AppStrings.t(ref, 'উত্তর বিশ্লেষণ ও ব্যাখ্যা',
+                    'Answer Review & Explanations'),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            if (reviewQuestion != null)
+              IconButton(
+                tooltip: isBookmarked
+                    ? AppStrings.t(ref, 'বুকমার্ক সরান', 'Remove Bookmark')
+                    : AppStrings.t(ref, 'বুকমার্ক করুন', 'Bookmark'),
+                icon: Icon(
+                  isBookmarked
+                      ? LucideIcons.bookmarkCheck
+                      : LucideIcons.bookmark,
+                  color: isBookmarked ? AppColors.amber : null,
+                  size: 20,
+                ),
+                onPressed: () {
+                  ref
+                      .read(questionBankControllerProvider.notifier)
+                      .toggleBookmark(reviewQuestion.id);
+                },
+              ),
+            IconButton(
+              tooltip: AppStrings.t(ref, 'স্কোরকার্ড দেখুন', 'View Scorecard'),
+              icon: const Icon(LucideIcons.trophy, size: 20),
+              onPressed: () => _showScorecardModal(context, ref),
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            // Filter Pills Bar
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  _FilterPill(
+                    label: AppStrings.t(
+                      ref,
+                      'সকল (${AppStrings.num(ref, state.totalQuestions)})',
+                      'All (${state.totalQuestions})',
+                    ),
+                    isSelected: _reviewFilter == ReviewFilter.all,
+                    selectedColor: AppColors.primary,
+                    onTap: () => setState(() {
+                      _reviewFilter = ReviewFilter.all;
+                      _reviewIndex = 0;
+                    }),
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterPill(
+                    label: AppStrings.t(
+                      ref,
+                      'ভুল উত্তর (${AppStrings.num(ref, state.incorrectCount)})',
+                      'Wrong (${state.incorrectCount})',
+                    ),
+                    isSelected: _reviewFilter == ReviewFilter.incorrect,
+                    selectedColor: AppColors.rose,
+                    onTap: () => setState(() {
+                      _reviewFilter = ReviewFilter.incorrect;
+                      _reviewIndex = 0;
+                    }),
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterPill(
+                    label: AppStrings.t(
+                      ref,
+                      'সঠিক (${AppStrings.num(ref, state.correctCount)})',
+                      'Correct (${state.correctCount})',
+                    ),
+                    isSelected: _reviewFilter == ReviewFilter.correct,
+                    selectedColor: AppColors.emerald,
+                    onTap: () => setState(() {
+                      _reviewFilter = ReviewFilter.correct;
+                      _reviewIndex = 0;
+                    }),
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterPill(
+                    label: AppStrings.t(
+                      ref,
+                      'ছেড়ে দেওয়া (${AppStrings.num(ref, state.unattemptedCount)})',
+                      'Skipped (${state.unattemptedCount})',
+                    ),
+                    isSelected: _reviewFilter == ReviewFilter.unattempted,
+                    selectedColor: Colors.amber.shade700,
+                    onTap: () => setState(() {
+                      _reviewFilter = ReviewFilter.unattempted;
+                      _reviewIndex = 0;
+                    }),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+
+            // Question Card Review with Swipe Gesture
+            Expanded(
+              child: !hasQuestions
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: AppColors.emerald.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(LucideIcons.checkCheck,
+                                  size: 48, color: AppColors.emerald),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _reviewFilter == ReviewFilter.incorrect
+                                  ? AppStrings.t(ref, 'কোনো ভুল উত্তর নেই!',
+                                      'No incorrect answers!')
+                                  : AppStrings.t(
+                                      ref,
+                                      'এই বিভাগে কোনো প্রশ্ন নেই',
+                                      'No questions in this filter',
+                                    ),
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _reviewFilter == ReviewFilter.incorrect
+                                  ? AppStrings.t(
+                                      ref,
+                                      'অভিনন্দন! আপনি অনুশীলনের সবগুলো প্রশ্ন সঠিকভাবে উত্তর দিয়েছেন।',
+                                      'Great job! All attempted questions were answered correctly.',
+                                    )
+                                  : AppStrings.t(
+                                      ref,
+                                      'অন্যান্য ফিল্টার নির্বাচন করে প্রশ্নগুলো পর্যালোচনা করুন।',
+                                      'Select other filters to review questions.',
+                                    ),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: isDark
+                                    ? AppColors.textSecondaryDark
+                                    : AppColors.textSecondaryLight,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onHorizontalDragEnd: (details) {
+                        if (details.primaryVelocity == null) return;
+                        if (details.primaryVelocity! < -250) {
+                          // Swipe Left -> Next
+                          if (safeReviewIndex < filteredQuestions.length - 1) {
+                            setState(() => _reviewIndex = safeReviewIndex + 1);
+                          }
+                        } else if (details.primaryVelocity! > 250) {
+                          // Swipe Right -> Previous
+                          if (safeReviewIndex > 0) {
+                            setState(() => _reviewIndex = safeReviewIndex - 1);
+                          }
+                        }
+                      },
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Question Counter & BCS Badge
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary
+                                        .withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    '${AppStrings.t(ref, 'প্রশ্ন', 'Question')}: ${AppStrings.num(ref, safeReviewIndex + 1)}/${AppStrings.num(ref, filteredQuestions.length)}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ),
+                                if (reviewQuestion!.tags.isNotEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      AppStrings.isBn(ref)
+                                          ? BengaliNumeralConverter
+                                              .formatBcsSource(
+                                                  reviewQuestion.tags.first)
+                                          : reviewQuestion.tags.first,
+                                      style: const TextStyle(
+                                          fontSize: 11, color: Colors.grey),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+
+                            // Question Text Card
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? AppColors.cardDark
+                                    : AppColors.cardLight,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isDark
+                                      ? AppColors.borderDark
+                                      : AppColors.borderLight,
+                                ),
+                              ),
+                              child: KaTexMathText(
+                                text: reviewQuestion.question,
+                                style: GoogleFonts.hindSiliguri(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.45,
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF1E293B),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Options List with Visual Status
+                            ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: reviewQuestion.options.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 10),
+                              itemBuilder: (context, optIdx) {
+                                final option = reviewQuestion.options[optIdx];
+                                final isSelected = state
+                                        .selectedAnswers[reviewQuestion.id] ==
+                                    option.id;
+                                final isCorrect =
+                                    reviewQuestion.correctOptionId == option.id;
+
+                                Color bg;
+                                Color borderColor;
+                                Color textColor;
+                                Widget? statusBadge;
+
+                                if (isCorrect) {
+                                  bg = AppColors.emerald.withValues(alpha: 0.12);
+                                  borderColor = AppColors.emerald;
+                                  textColor = AppColors.emerald;
+                                  statusBadge = Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 7, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.emerald,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      AppStrings.t(ref, '✓ সঠিক উত্তর',
+                                          '✓ Correct Answer'),
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  );
+                                } else if (isSelected) {
+                                  bg = AppColors.rose.withValues(alpha: 0.12);
+                                  borderColor = AppColors.rose;
+                                  textColor = AppColors.rose;
+                                  statusBadge = Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 7, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.rose,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      AppStrings.t(ref, '✕ আপনার ভুল উত্তর',
+                                          '✕ Your Answer'),
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  bg = isDark
+                                      ? AppColors.cardDark
+                                      : AppColors.cardLight;
+                                  borderColor = isDark
+                                      ? AppColors.borderDark
+                                      : AppColors.borderLight;
+                                  textColor = isDark
+                                      ? Colors.white70
+                                      : Colors.black87;
+                                }
+
+                                final optionPrefixes = AppStrings.isBn(ref)
+                                    ? ['ক', 'খ', 'গ', 'ঘ']
+                                    : ['A', 'B', 'C', 'D'];
+                                final prefix = optIdx < optionPrefixes.length
+                                    ? optionPrefixes[optIdx]
+                                    : '${optIdx + 1}';
+
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: bg,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                        color: borderColor,
+                                        width: (isCorrect || isSelected)
+                                            ? 1.8
+                                            : 1.0),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 28,
+                                        height: 28,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: borderColor
+                                              .withValues(alpha: 0.15),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Text(
+                                          prefix,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                            color: borderColor,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: KaTexMathText(
+                                          text: option.text,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: (isCorrect || isSelected)
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                            color: textColor,
+                                          ),
+                                        ),
+                                      ),
+                                      if (statusBadge != null) statusBadge,
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Detailed Explanation Card
+                            if (reviewQuestion.explanation.isNotEmpty)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color:
+                                      AppColors.emerald.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: AppColors.emerald
+                                        .withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(LucideIcons.sparkles,
+                                            size: 16, color: AppColors.emerald),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          AppStrings.t(
+                                            ref,
+                                            'সঠিক উত্তর ও বিশদ ব্যাখ্যা',
+                                            'Correct Answer & Detailed Explanation',
+                                          ),
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.emerald,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    KaTexMathText(
+                                      text: reviewQuestion.explanation,
+                                      style: GoogleFonts.hindSiliguri(
+                                        fontSize: 13,
+                                        height: 1.5,
+                                        color: isDark
+                                            ? Colors.white70
+                                            : Colors.black87,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+            ),
+
+            // Review Mode Bottom Navigation Bar
+            if (hasQuestions)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.cardDark : Colors.white,
+                  border: Border(
+                    top: BorderSide(
+                      color:
+                          isDark ? AppColors.borderDark : AppColors.borderLight,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: safeReviewIndex > 0
+                          ? () => setState(() => _reviewIndex = safeReviewIndex - 1)
+                          : null,
+                      icon: const Icon(LucideIcons.chevronLeft, size: 16),
+                      label: Text(AppStrings.t(ref, 'পূর্ববর্তী', 'Previous')),
+                    ),
+                    const Spacer(),
+                    TextButton.icon(
+                      onPressed: () => _showScorecardModal(context, ref),
+                      icon: const Icon(LucideIcons.trophy, size: 16),
+                      label: Text(AppStrings.t(ref, 'স্কোরকার্ড', 'Scorecard')),
+                    ),
+                    const Spacer(),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 10),
+                      ),
+                      onPressed: safeReviewIndex < filteredQuestions.length - 1
+                          ? () => setState(
+                              () => _reviewIndex = safeReviewIndex + 1)
+                          : () => _showScorecardModal(context, ref),
+                      icon: Icon(
+                        safeReviewIndex < filteredQuestions.length - 1
+                            ? LucideIcons.chevronRight
+                            : LucideIcons.checkCheck,
+                        size: 16,
+                      ),
+                      label: Text(
+                        safeReviewIndex < filteredQuestions.length - 1
+                            ? AppStrings.t(ref, 'পরবর্তী', 'Next')
+                            : AppStrings.t(ref, 'সমাপ্ত', 'Done'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      );
+    }
+
+    // =========================================================================
+    // MODE B: LIVE PRACTICE MODE (Interactive Quiz Running)
+    // =========================================================================
     final question = state.currentQuestion;
     if (question == null) {
       return Scaffold(
@@ -486,6 +1155,7 @@ class PracticeSessionScreen extends ConsumerWidget {
     final selectedOption = state.selectedAnswers[question.id];
     final isRevealed = state.revealedMap[question.id] == true;
     final isBookmarked = qbState.bookmarkedIds.contains(question.id);
+    final isMarked = state.markedQuestionIds.contains(question.id);
 
     return Scaffold(
       appBar: AppBar(
@@ -518,7 +1188,7 @@ class PracticeSessionScreen extends ConsumerWidget {
           ],
         ),
         actions: [
-          // Timer or Mode Pill
+          // Timer in Exam Mode
           if (state.mode == PracticeMode.exam)
             Container(
               margin: const EdgeInsets.symmetric(vertical: 10),
@@ -552,6 +1222,23 @@ class PracticeSessionScreen extends ConsumerWidget {
                 ],
               ),
             ),
+
+          // Flag / Mark for Review Button (Feature 3)
+          IconButton(
+            tooltip: isMarked
+                ? AppStrings.t(ref, 'চিহ্নিত বাতিল করুন', 'Remove Flag')
+                : AppStrings.t(ref, 'রিভিউয়ের জন্য চিহ্নিত করুন', 'Flag for Review'),
+            icon: Icon(
+              LucideIcons.flag,
+              color: isMarked ? AppColors.amber : null,
+              size: 20,
+            ),
+            onPressed: () {
+              ref
+                  .read(practiceSessionControllerProvider.notifier)
+                  .toggleMarkQuestion(question.id);
+            },
+          ),
 
           // Bookmark Toggle
           IconButton(
@@ -588,240 +1275,296 @@ class PracticeSessionScreen extends ConsumerWidget {
             minHeight: 4,
           ),
 
+          // Question Body wrapped in Horizontal Swipe GestureDetector (Feature 1)
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Question Counter & Badges
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '${AppStrings.t(ref, 'প্রশ্ন', 'Question')}: ${AppStrings.num(ref, currIdx + 1)}/${AppStrings.num(ref, totalQ)}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                      if (question.tags.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            AppStrings.isBn(ref)
-                                ? BengaliNumeralConverter.formatBcsSource(
-                                    question.tags.first)
-                                : question.tags.first,
-                            style: const TextStyle(fontSize: 11, color: Colors.grey),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Question Text Card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.cardDark : AppColors.cardLight,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? AppColors.borderDark : AppColors.borderLight,
-                      ),
-                    ),
-                    child: KaTexMathText(
-                      text: question.question,
-                      style: GoogleFonts.hindSiliguri(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        height: 1.45,
-                        color: isDark ? Colors.white : const Color(0xFF1E293B),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Options List
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: question.options.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (context, optIdx) {
-                      final option = question.options[optIdx];
-                      final isSelected = selectedOption == option.id;
-                      final isCorrect = question.correctOptionId == option.id;
-
-                      Color bg;
-                      Color borderColor;
-                      Color textColor;
-                      Widget? statusIcon;
-
-                      if (state.mode == PracticeMode.instant && isRevealed) {
-                        if (isCorrect) {
-                          bg = AppColors.emerald.withValues(alpha: 0.12);
-                          borderColor = AppColors.emerald;
-                          textColor = AppColors.emerald;
-                          statusIcon = const Icon(LucideIcons.checkCircle,
-                              color: AppColors.emerald, size: 18);
-                        } else if (isSelected) {
-                          bg = AppColors.rose.withValues(alpha: 0.12);
-                          borderColor = AppColors.rose;
-                          textColor = AppColors.rose;
-                          statusIcon = const Icon(LucideIcons.xCircle,
-                              color: AppColors.rose, size: 18);
-                        } else {
-                          bg = isDark ? AppColors.cardDark : AppColors.cardLight;
-                          borderColor = isDark
-                              ? AppColors.borderDark
-                              : AppColors.borderLight;
-                          textColor = isDark ? Colors.white70 : Colors.black87;
-                        }
-                      } else {
-                        if (isSelected) {
-                          bg = AppColors.primary.withValues(alpha: 0.12);
-                          borderColor = AppColors.primary;
-                          textColor = AppColors.primary;
-                          statusIcon = const Icon(LucideIcons.checkCircle2,
-                              color: AppColors.primary, size: 18);
-                        } else {
-                          bg = isDark ? AppColors.cardDark : AppColors.cardLight;
-                          borderColor = isDark
-                              ? AppColors.borderDark
-                              : AppColors.borderLight;
-                          textColor = isDark ? Colors.white70 : Colors.black87;
-                        }
-                      }
-
-                      final optionPrefixes = AppStrings.isBn(ref)
-                          ? ['ক', 'খ', 'গ', 'ঘ']
-                          : ['A', 'B', 'C', 'D'];
-                      final prefix = optIdx < optionPrefixes.length
-                          ? optionPrefixes[optIdx]
-                          : '${optIdx + 1}';
-
-                      return InkWell(
-                        onTap: () {
-                          ref
-                              .read(practiceSessionControllerProvider.notifier)
-                              .selectOption(option.id);
-                        },
-                        borderRadius: BorderRadius.circular(14),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: bg,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: borderColor, width: 1.5),
-                          ),
-                          child: Row(
-                            children: [
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onHorizontalDragEnd: (details) {
+                if (details.primaryVelocity == null) return;
+                if (details.primaryVelocity! < -250) {
+                  // Swiped Left -> Next Question
+                  ref
+                      .read(practiceSessionControllerProvider.notifier)
+                      .nextQuestion();
+                } else if (details.primaryVelocity! > 250) {
+                  // Swiped Right -> Previous Question
+                  ref
+                      .read(practiceSessionControllerProvider.notifier)
+                      .previousQuestion();
+                }
+              },
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Question Counter & Badges
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${AppStrings.t(ref, 'প্রশ্ন', 'Question')}: ${AppStrings.num(ref, currIdx + 1)}/${AppStrings.num(ref, totalQ)}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                            if (isMarked) ...[
+                              const SizedBox(width: 8),
                               Container(
-                                width: 28,
-                                height: 28,
-                                alignment: Alignment.center,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: borderColor.withValues(alpha: 0.15),
-                                  shape: BoxShape.circle,
+                                  color: AppColors.amber.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: Text(
-                                  prefix,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                    color: borderColor,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: KaTexMathText(
-                                  text: option.text,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: isSelected
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                    color: textColor,
-                                  ),
+                                child: Row(
+                                  children: [
+                                    const Icon(LucideIcons.flag,
+                                        size: 11, color: AppColors.amber),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      AppStrings.t(ref, 'চিহ্নিত', 'Flagged'),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.amber,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              if (statusIcon != null) statusIcon,
                             ],
-                          ),
+                          ],
                         ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
+                        if (question.tags.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              AppStrings.isBn(ref)
+                                  ? BengaliNumeralConverter.formatBcsSource(
+                                      question.tags.first)
+                                  : question.tags.first,
+                              style: const TextStyle(
+                                  fontSize: 11, color: Colors.grey),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
 
-                  // Instant Mode Explanation
-                  if (state.mode == PracticeMode.instant &&
-                      isRevealed &&
-                      question.explanation.isNotEmpty)
+                    // Question Text Card
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.emerald.withValues(alpha: 0.08),
+                        color: isDark ? AppColors.cardDark : AppColors.cardLight,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: AppColors.emerald.withValues(alpha: 0.3),
+                          color: isDark
+                              ? AppColors.borderDark
+                              : AppColors.borderLight,
                         ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(LucideIcons.sparkles,
-                                  size: 16, color: AppColors.emerald),
-                              const SizedBox(width: 6),
-                              Text(
-                                AppStrings.t(
-                                  ref,
-                                  'সঠিক উত্তর ও বিশদ ব্যাখ্যা',
-                                  'Correct Answer & Detailed Explanation',
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.emerald,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          KaTexMathText(
-                            text: question.explanation,
-                            style: GoogleFonts.hindSiliguri(
-                              fontSize: 13,
-                              height: 1.5,
-                              color: isDark ? Colors.white70 : Colors.black87,
-                            ),
-                          ),
-                        ],
+                      child: KaTexMathText(
+                        text: question.question,
+                        style: GoogleFonts.hindSiliguri(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          height: 1.45,
+                          color:
+                              isDark ? Colors.white : const Color(0xFF1E293B),
+                        ),
                       ),
                     ),
-                ],
+                    const SizedBox(height: 16),
+
+                    // Options List
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: question.options.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (context, optIdx) {
+                        final option = question.options[optIdx];
+                        final isSelected = selectedOption == option.id;
+                        final isCorrect = question.correctOptionId == option.id;
+
+                        Color bg;
+                        Color borderColor;
+                        Color textColor;
+                        Widget? statusIcon;
+
+                        if (state.mode == PracticeMode.instant && isRevealed) {
+                          if (isCorrect) {
+                            bg = AppColors.emerald.withValues(alpha: 0.12);
+                            borderColor = AppColors.emerald;
+                            textColor = AppColors.emerald;
+                            statusIcon = const Icon(LucideIcons.checkCircle,
+                                color: AppColors.emerald, size: 18);
+                          } else if (isSelected) {
+                            bg = AppColors.rose.withValues(alpha: 0.12);
+                            borderColor = AppColors.rose;
+                            textColor = AppColors.rose;
+                            statusIcon = const Icon(LucideIcons.xCircle,
+                                color: AppColors.rose, size: 18);
+                          } else {
+                            bg = isDark
+                                ? AppColors.cardDark
+                                : AppColors.cardLight;
+                            borderColor = isDark
+                                ? AppColors.borderDark
+                                : AppColors.borderLight;
+                            textColor = isDark ? Colors.white70 : Colors.black87;
+                          }
+                        } else {
+                          if (isSelected) {
+                            bg = AppColors.primary.withValues(alpha: 0.12);
+                            borderColor = AppColors.primary;
+                            textColor = AppColors.primary;
+                            statusIcon = const Icon(LucideIcons.checkCircle2,
+                                color: AppColors.primary, size: 18);
+                          } else {
+                            bg = isDark
+                                ? AppColors.cardDark
+                                : AppColors.cardLight;
+                            borderColor = isDark
+                                ? AppColors.borderDark
+                                : AppColors.borderLight;
+                            textColor = isDark ? Colors.white70 : Colors.black87;
+                          }
+                        }
+
+                        final optionPrefixes = AppStrings.isBn(ref)
+                            ? ['ক', 'খ', 'গ', 'ঘ']
+                            : ['A', 'B', 'C', 'D'];
+                        final prefix = optIdx < optionPrefixes.length
+                            ? optionPrefixes[optIdx]
+                            : '${optIdx + 1}';
+
+                        return InkWell(
+                          onTap: () {
+                            ref
+                                .read(practiceSessionControllerProvider.notifier)
+                                .selectOption(option.id);
+                          },
+                          borderRadius: BorderRadius.circular(14),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: bg,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: borderColor, width: 1.5),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 28,
+                                  height: 28,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: borderColor.withValues(alpha: 0.15),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    prefix,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: borderColor,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: KaTexMathText(
+                                    text: option.text,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: textColor,
+                                    ),
+                                  ),
+                                ),
+                                if (statusIcon != null) statusIcon,
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Instant Mode Explanation
+                    if (state.mode == PracticeMode.instant &&
+                        isRevealed &&
+                        question.explanation.isNotEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.emerald.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: AppColors.emerald.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(LucideIcons.sparkles,
+                                    size: 16, color: AppColors.emerald),
+                                const SizedBox(width: 6),
+                                Text(
+                                  AppStrings.t(
+                                    ref,
+                                    'সঠিক উত্তর ও বিশদ ব্যাখ্যা',
+                                    'Correct Answer & Detailed Explanation',
+                                  ),
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.emerald,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            KaTexMathText(
+                              text: question.explanation,
+                              style: GoogleFonts.hindSiliguri(
+                                fontSize: 13,
+                                height: 1.5,
+                                color: isDark ? Colors.white70 : Colors.black87,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -852,7 +1595,8 @@ class PracticeSessionScreen extends ConsumerWidget {
                 if (isLast || state.mode == PracticeMode.exam)
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isLast ? AppColors.primary : AppColors.secondary,
+                      backgroundColor:
+                          isLast ? AppColors.primary : AppColors.secondary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 12),
@@ -889,6 +1633,90 @@ class PracticeSessionScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _FilterPill extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final Color selectedColor;
+  final VoidCallback onTap;
+
+  const _FilterPill({
+    required this.label,
+    required this.isSelected,
+    required this.selectedColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? selectedColor
+              : (isDark ? AppColors.cardDark : Colors.grey.shade100),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? selectedColor
+                : (isDark ? AppColors.borderDark : AppColors.borderLight),
+            width: 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            color: isSelected
+                ? Colors.white
+                : (isDark ? Colors.white70 : Colors.black87),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PaletteLegendItem extends StatelessWidget {
+  final Color color;
+  final String label;
+
+  const _PaletteLegendItem({
+    required this.color,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: isDark ? Colors.white60 : Colors.black54,
+          ),
+        ),
+      ],
     );
   }
 }

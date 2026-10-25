@@ -13,6 +13,7 @@ import 'package:medhavi_mobile/features/question_bank/presentation/screens/quest
     show kBcsBatches;
 import 'package:medhavi_mobile/features/bookmarks/presentation/controllers/bookmarks_controller.dart';
 import 'package:medhavi_mobile/features/mistakes/presentation/controllers/mistakes_controller.dart';
+import 'package:medhavi_mobile/features/analytics/presentation/controllers/analytics_controller.dart';
 
 const List<Map<String, dynamic>> _kDefaultBcsSubjects = [
   {
@@ -152,6 +153,7 @@ class PracticeHubScreen extends ConsumerWidget {
     final qbState = ref.watch(questionBankControllerProvider);
     final bmState = ref.watch(bookmarksControllerProvider);
     final mbState = ref.watch(mistakesControllerProvider);
+    final analytics = ref.watch(analyticsControllerProvider);
 
     final subjects =
         qbState.subjects.isNotEmpty ? qbState.subjects : _kDefaultBcsSubjects;
@@ -209,6 +211,7 @@ class PracticeHubScreen extends ConsumerWidget {
             ref.read(questionBankControllerProvider.notifier).init(),
             ref.read(bookmarksControllerProvider.notifier).loadBookmarks(),
             ref.read(mistakesControllerProvider.notifier).loadMistakes(),
+            ref.read(analyticsControllerProvider.notifier).refreshStats(),
           ]);
         },
         child: SingleChildScrollView(
@@ -528,6 +531,12 @@ class PracticeHubScreen extends ConsumerWidget {
                     AppColors.primary;
                 final count = qbState.subjectCounts[subId] ?? 0;
                 final displayTitle = isBn ? name : nameEn;
+                final subjectPerf = analytics.subjects
+                    .where((s) => s.subjectId == subId)
+                    .firstOrNull;
+                final solvedCount = subjectPerf?.solved ?? 0;
+                final progress =
+                    count > 0 ? (solvedCount / count).clamp(0.0, 1.0) : 0.0;
 
                 return Card(
                   child: InkWell(
@@ -567,11 +576,29 @@ class PracticeHubScreen extends ConsumerWidget {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                const SizedBox(height: 2),
+                                const SizedBox(height: 5),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(2),
+                                  child: LinearProgressIndicator(
+                                    value: progress,
+                                    minHeight: 3,
+                                    backgroundColor: isDark
+                                        ? Colors.white.withValues(alpha: 0.08)
+                                        : Colors.grey.shade200,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      progress >= 0.7
+                                          ? AppColors.emerald
+                                          : (progress > 0
+                                              ? color
+                                              : Colors.grey.shade400),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
                                 Text(
                                   isBn
-                                      ? '${count > 0 ? '${AppStrings.num(ref, count)}টি প্রশ্ন • ' : ''}বিসিএস প্রিলি মান: ${AppStrings.num(ref, marks)}'
-                                      : '${count > 0 ? '$count MCQs • ' : ''}BCS Marks: $marks',
+                                      ? '${solvedCount > 0 ? '${AppStrings.num(ref, solvedCount)}টি অনুশীলিত • ' : ''}বিসিএস প্রিলি মান: ${AppStrings.num(ref, marks)}'
+                                      : '${solvedCount > 0 ? '$solvedCount Solved • ' : ''}BCS Marks: $marks',
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: isDark

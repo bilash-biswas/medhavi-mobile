@@ -20,6 +20,7 @@ class PracticeSessionState {
   final Map<String, String> selectedAnswers; // questionId -> optionId
   final Map<String, bool> revealedMap; // questionId -> bool (for instant mode)
   final PracticeMode mode;
+  final Set<String> markedQuestionIds; // questionId set flagged for review
   final int timeRemainingSeconds;
   final int totalTimeSeconds;
   final bool isLoading;
@@ -34,6 +35,7 @@ class PracticeSessionState {
     this.selectedAnswers = const {},
     this.revealedMap = const {},
     this.mode = PracticeMode.instant,
+    this.markedQuestionIds = const {},
     this.timeRemainingSeconds = 600,
     this.totalTimeSeconds = 600,
     this.isLoading = false,
@@ -71,6 +73,21 @@ class PracticeSessionState {
 
   int get unattemptedCount => totalQuestions - selectedAnswers.length;
 
+  List<QuestionEntity> get incorrectQuestions => questions
+      .where((q) =>
+          selectedAnswers.containsKey(q.id) &&
+          selectedAnswers[q.id] != q.correctOptionId)
+      .toList();
+
+  List<QuestionEntity> get correctQuestions => questions
+      .where((q) =>
+          selectedAnswers.containsKey(q.id) &&
+          selectedAnswers[q.id] == q.correctOptionId)
+      .toList();
+
+  List<QuestionEntity> get unattemptedQuestions =>
+      questions.where((q) => !selectedAnswers.containsKey(q.id)).toList();
+
   int get accuracyPercentage {
     if (selectedAnswers.isEmpty) return 0;
     return ((correctCount / selectedAnswers.length) * 100).toInt();
@@ -90,6 +107,7 @@ class PracticeSessionState {
     Map<String, String>? selectedAnswers,
     Map<String, bool>? revealedMap,
     PracticeMode? mode,
+    Set<String>? markedQuestionIds,
     int? timeRemainingSeconds,
     int? totalTimeSeconds,
     bool? isLoading,
@@ -104,6 +122,7 @@ class PracticeSessionState {
       selectedAnswers: selectedAnswers ?? this.selectedAnswers,
       revealedMap: revealedMap ?? this.revealedMap,
       mode: mode ?? this.mode,
+      markedQuestionIds: markedQuestionIds ?? this.markedQuestionIds,
       timeRemainingSeconds:
           timeRemainingSeconds ?? this.timeRemainingSeconds,
       totalTimeSeconds: totalTimeSeconds ?? this.totalTimeSeconds,
@@ -209,6 +228,7 @@ class PracticeSessionController extends Notifier<PracticeSessionState> {
       currentIndex: 0,
       selectedAnswers: {},
       revealedMap: {},
+      markedQuestionIds: {},
       timeRemainingSeconds: durationSeconds,
       totalTimeSeconds: durationSeconds,
       isLoading: false,
@@ -276,6 +296,17 @@ class PracticeSessionController extends Notifier<PracticeSessionState> {
     if (index >= 0 && index < state.questions.length) {
       state = state.copyWith(currentIndex: index);
     }
+  }
+
+  /// Toggle flag/mark for review on a question
+  void toggleMarkQuestion(String questionId) {
+    final updated = Set<String>.from(state.markedQuestionIds);
+    if (updated.contains(questionId)) {
+      updated.remove(questionId);
+    } else {
+      updated.add(questionId);
+    }
+    state = state.copyWith(markedQuestionIds: updated);
   }
 
   /// Complete & Submit Practice Session
