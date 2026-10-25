@@ -6,11 +6,11 @@ import 'package:medhavi_mobile/core/utils/bengali_numeral_converter.dart';
 import 'package:medhavi_mobile/core/components/katex_math_text.dart';
 import 'package:medhavi_mobile/features/question_bank/domain/entities/question_entity.dart';
 
-/// Universal Component-Based Question Card for Medhavi.
+/// Minimal Component-Based Question Card for Medhavi.
 /// Reusable across:
 /// 1. Question Bank Study Screen (/question-bank)
-/// 2. Bookmarks Screen (/bookmarks) with "My Answer" vs "Correct Answer"
-/// 3. Mistake Bank Screen (/mistakes) with "My Wrong Answer" vs "Correct Answer"
+/// 2. Bookmarks Screen (/bookmarks)
+/// 3. Mistake Bank Screen (/mistakes)
 class StudyQuestionCard extends StatefulWidget {
   final int index;
   final QuestionEntity question;
@@ -48,11 +48,10 @@ class StudyQuestionCard extends StatefulWidget {
 class _StudyQuestionCardState extends State<StudyQuestionCard> {
   late bool _isRevealed;
   String? _selectedOptionId;
-  bool _copied = false;
   bool _bookmarkLoading = false;
 
-  final List<String> _optionLetters = ['A', 'B', 'C', 'D', 'E'];
-  final List<String> _bnLetters = ['ক', 'খ', 'গ', 'ঘ', 'ঙ'];
+  final List<String> _enOptionLetters = ['A', 'B', 'C', 'D', 'E'];
+  final List<String> _bnOptionLetters = ['ক', 'খ', 'গ', 'ঘ', 'ঙ'];
 
   @override
   void initState() {
@@ -105,67 +104,18 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
     }
   }
 
-  void _copyQuestionToClipboard() {
-    HapticFeedback.selectionClick();
-    final q = widget.question;
-    final buffer = StringBuffer();
-    buffer.writeln('প্রশ্ন: ${q.question}');
-    for (int i = 0; i < q.options.length; i++) {
-      final letter = i < _bnLetters.length
-          ? '(${_bnLetters[i]})'
-          : '(${q.options[i].id.toUpperCase()})';
-      buffer.writeln('$letter ${q.options[i].text}');
-    }
-    final correctOpt = q.options.firstWhere(
-      (o) => o.id == q.correctOptionId,
-      orElse: () =>
-          QuestionOption(id: q.correctOptionId, text: q.correctOptionId),
-    );
-    buffer.writeln('সঠিক উত্তর: ${correctOpt.text}');
-    if (q.explanation.isNotEmpty) {
-      buffer.writeln('\nব্যাখ্যা:\n${q.explanation}');
-    }
-    if (q.source != null) {
-      buffer.writeln('\n[উৎস: ${q.source}]');
-    }
-    buffer.writeln('\n— মেধাবী (Medhavi) প্রশ্ন ব্যাংক');
-
-    Clipboard.setData(ClipboardData(text: buffer.toString()));
-    setState(() => _copied = true);
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) setState(() => _copied = false);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isBn = Localizations.localeOf(context).languageCode != 'en';
     final q = widget.question;
 
-    final correctOpt = q.options.firstWhere(
-      (o) => o.id == q.correctOptionId,
-      orElse: () =>
-          QuestionOption(id: q.correctOptionId, text: q.correctOptionId),
-    );
-    final correctIdx = q.options.indexWhere((o) => o.id == q.correctOptionId);
-    final correctLetter = correctIdx >= 0
-        ? _optionLetters[correctIdx]
-        : q.correctOptionId.toUpperCase();
-
-    final userOpt = _selectedOptionId != null
-        ? q.options.firstWhere((o) => o.id == _selectedOptionId,
-            orElse: () => QuestionOption(id: '', text: ''))
-        : null;
-    final userIdx = _selectedOptionId != null
-        ? q.options.indexWhere((o) => o.id == _selectedOptionId)
-        : -1;
-    final userLetter = userIdx >= 0
-        ? _optionLetters[userIdx]
-        : _selectedOptionId?.toUpperCase();
+    // Dynamic Option Letters based on language
+    final optionLetters = isBn ? _bnOptionLetters : _enOptionLetters;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : AppColors.cardLight,
         borderRadius: BorderRadius.circular(16),
@@ -183,270 +133,278 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Header (Minimal Index, Source, Subject & Actions)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          // 1. Quiet Header (Metadata & Top-Right Actions)
+          Row(
+            children: [
+              Expanded(
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 6,
+                  runSpacing: 4,
                   children: [
-                    // Minimal Index & Source Dot Metadata
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 7, vertical: 2.5),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.white10
-                                  : const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              isBn
-                                  ? 'প্রশ্ন ${BengaliNumeralConverter.toBengaliNumber(widget.index + 1)}'
-                                  : 'Q #${widget.index + 1}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight,
-                              ),
-                            ),
-                          ),
-                          if (q.source != null) ...[
-                            const SizedBox(width: 6),
-                            Text('•',
-                                style: TextStyle(
-                                    color: Colors.grey.withValues(alpha: 0.5),
-                                    fontSize: 10)),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                isBn
-                                    ? BengaliNumeralConverter.toBengaliBcsTitle(
-                                        q.source!)
-                                    : q.source!,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ),
-                          ],
-                          if (widget.subjectName != null) ...[
-                            const SizedBox(width: 6),
-                            Text('•',
-                                style: TextStyle(
-                                    color: Colors.grey.withValues(alpha: 0.5),
-                                    fontSize: 10)),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                widget.subjectName!,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: isDark
-                                      ? AppColors.textSecondaryDark
-                                      : AppColors.textSecondaryLight,
-                                ),
-                              ),
-                            ),
-                          ],
-                          if (q.adminVerified) ...[
-                            const SizedBox(width: 6),
-                            Icon(
-                              LucideIcons.badgeCheck,
-                              size: 13,
-                              color: isDark
-                                  ? const Color(0xFF34D399)
-                                  : const Color(0xFF059669),
-                            ),
-                          ],
-                        ],
+                    // Question Index Pill
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white10
+                            : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        isBn
+                            ? 'প্রশ্ন ${BengaliNumeralConverter.toBengaliNumber(widget.index + 1)}'
+                            : 'Q #${widget.index + 1}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isDark
+                              ? AppColors.textPrimaryDark
+                              : AppColors.textPrimaryLight,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 4),
 
-                    // Remove Button (Optional for Bookmarks / Mistakes)
-                    if (widget.onRemove != null) ...[
-                      IconButton(
-                        onPressed: widget.onRemove,
-                        tooltip: widget.removeTooltip,
-                        icon: const Icon(LucideIcons.trash2, size: 16),
-                        color: Colors.redAccent,
-                        padding: EdgeInsets.zero,
-                        constraints:
-                            const BoxConstraints(minWidth: 32, minHeight: 32),
+                    // Source / Batch
+                    if (q.source != null && q.source!.isNotEmpty) ...[
+                      Text('•',
+                          style: TextStyle(
+                              color: Colors.grey.withValues(alpha: 0.5),
+                              fontSize: 10)),
+                      Text(
+                        isBn
+                            ? BengaliNumeralConverter.toBengaliBcsTitle(
+                                q.source!)
+                            : q.source!,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
                       ),
-                      const SizedBox(width: 4),
                     ],
 
-                    // Bookmark Star Button
-                    IconButton(
-                      onPressed: _bookmarkLoading ? null : _handleBookmark,
-                      tooltip: isBn
-                          ? (widget.isBookmarked
-                              ? 'সংরক্ষণ তালিকা থেকে সরান'
-                              : 'বুকমার্ক করুন')
-                          : (widget.isBookmarked
-                              ? 'Remove Bookmark'
-                              : 'Bookmark'),
-                      icon: Icon(
-                        widget.isBookmarked
-                            ? Icons.bookmark
-                            : Icons.bookmark_border,
-                        size: 20,
-                        color: widget.isBookmarked
-                            ? Colors.amber
-                            : (isDark ? Colors.white38 : Colors.black26),
+                    // Subject
+                    if (widget.subjectName != null) ...[
+                      Text('•',
+                          style: TextStyle(
+                              color: Colors.grey.withValues(alpha: 0.5),
+                              fontSize: 10)),
+                      Text(
+                        widget.subjectName!,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
+                        ),
                       ),
-                      padding: EdgeInsets.zero,
-                      constraints:
-                          const BoxConstraints(minWidth: 32, minHeight: 32),
-                    ),
+                    ],
+
+                    // Verified Badge
+                    if (q.adminVerified) ...[
+                      Text('•',
+                          style: TextStyle(
+                              color: Colors.grey.withValues(alpha: 0.5),
+                              fontSize: 10)),
+                      Icon(
+                        LucideIcons.badgeCheck,
+                        size: 13,
+                        color: isDark
+                            ? const Color(0xFF34D399)
+                            : const Color(0xFF059669),
+                      ),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 12),
-                // Question Text
-                KaTexMathText(
-                  text: q.question,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    height: 1.45,
-                    color: isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimaryLight,
+              ),
+              const SizedBox(width: 4),
+
+              // Actions: Remove & Bookmark
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (widget.onRemove != null) ...[
+                    IconButton(
+                      onPressed: widget.onRemove,
+                      tooltip: widget.removeTooltip,
+                      icon: const Icon(LucideIcons.trash2, size: 16),
+                      color: Colors.redAccent,
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 30, minHeight: 30),
+                    ),
+                    const SizedBox(width: 2),
+                  ],
+                  IconButton(
+                    onPressed: _bookmarkLoading ? null : _handleBookmark,
+                    tooltip: isBn
+                        ? (widget.isBookmarked
+                            ? 'সংরক্ষণ তালিকা থেকে সরান'
+                            : 'বুকমার্ক করুন')
+                        : (widget.isBookmarked
+                            ? 'Remove Bookmark'
+                            : 'Bookmark'),
+                    icon: Icon(
+                      widget.isBookmarked
+                          ? Icons.bookmark
+                          : Icons.bookmark_border,
+                      size: 20,
+                      color: widget.isBookmarked
+                          ? Colors.amber
+                          : (isDark ? Colors.white38 : Colors.black26),
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints:
+                        const BoxConstraints(minWidth: 30, minHeight: 30),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
           ),
 
-          // 2. Comparative Answer Summary Banner
-          if (_isRevealed) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _buildAnswerComparisonBanner(
-                isDark: isDark,
-                isBn: isBn,
-                correctLetter: correctLetter,
-                correctText: correctOpt.text,
-                userLetter: userLetter,
-                userText: userOpt?.text,
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
+          const SizedBox(height: 10),
 
-          // 3. Options List
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: List.generate(q.options.length, (optIdx) {
-                final opt = q.options[optIdx];
-                final letter = optIdx < _optionLetters.length
-                    ? _optionLetters[optIdx]
-                    : opt.id.toUpperCase();
-                final isCorrect = opt.id == q.correctOptionId;
-                final isSelected = _selectedOptionId == opt.id;
-
-                return _buildOptionTile(
-                  isDark: isDark,
-                  isBn: isBn,
-                  letter: letter,
-                  text: opt.text,
-                  isCorrect: isCorrect,
-                  isSelected: isSelected,
-                  isRevealed: _isRevealed,
-                  onTap: () => _handleOptionClick(opt.id),
-                );
-              }),
+          // 2. Question Prompt
+          KaTexMathText(
+            text: q.question,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              height: 1.45,
+              color: isDark
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimaryLight,
             ),
           ),
 
           const SizedBox(height: 12),
 
-          // 4. Reveal Action Bar
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.black26
-                  : Colors.black.withValues(alpha: 0.02),
-              border: Border(
-                top: BorderSide(
-                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
-                ),
-              ),
-            ),
-            child: Row(
+          // 3. Clean Option Tiles
+          Column(
+            children: List.generate(q.options.length, (optIdx) {
+              final opt = q.options[optIdx];
+              final letter = optIdx < optionLetters.length
+                  ? optionLetters[optIdx]
+                  : opt.id.toUpperCase();
+              final isCorrect = opt.id == q.correctOptionId;
+              final isSelected = _selectedOptionId == opt.id;
+
+              return _buildOptionTile(
+                isDark: isDark,
+                isBn: isBn,
+                letter: letter,
+                text: opt.text,
+                isCorrect: isCorrect,
+                isSelected: isSelected,
+                isRevealed: _isRevealed,
+                onTap: () => _handleOptionClick(opt.id),
+              );
+            }),
+          ),
+
+          const SizedBox(height: 4),
+
+          // 4. Seamless Inline Reveal & Explanation
+          if (!_isRevealed) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Toggle Button
                 InkWell(
                   onTap: _toggleReveal,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _isRevealed
-                          ? (isDark
-                              ? Colors.white12
-                              : Colors.black.withValues(alpha: 0.08))
-                          : AppColors.primary,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          _isRevealed ? LucideIcons.eyeOff : LucideIcons.eye,
-                          size: 14,
-                          color: _isRevealed
-                              ? (isDark ? Colors.white70 : Colors.black87)
-                              : Colors.white,
-                        ),
+                        const Icon(LucideIcons.eye,
+                            size: 14, color: AppColors.primary),
                         const SizedBox(width: 6),
                         Text(
                           isBn
-                              ? (_isRevealed
-                                  ? 'উত্তর ও ব্যাখ্যা লুকান'
-                                  : 'উত্তর ও ব্যাখ্যা দেখুন')
-                              : (_isRevealed
-                                  ? 'Hide Answer & Explanation'
-                                  : 'Show Answer & Explanation'),
-                          style: TextStyle(
+                              ? 'উত্তর ও ব্যাখ্যা দেখুন'
+                              : 'Reveal Answer & Explanation',
+                          style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: _isRevealed
-                                ? (isDark ? Colors.white70 : Colors.black87)
-                                : Colors.white,
+                            color: AppColors.primary,
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-
-                const Spacer(),
-
-                // Answer Result Status Badge
+                if (widget.showPracticeSingle &&
+                    widget.onPracticeSingle != null) ...[
+                  InkWell(
+                    onTap: widget.onPracticeSingle,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(LucideIcons.sparkles,
+                              size: 13, color: AppColors.primary),
+                          const SizedBox(width: 4),
+                          Text(
+                            isBn ? 'একক অনুশীলন' : 'Practice Single',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ] else ...[
+            // Header row inside revealed state (Toggle & Result status)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                InkWell(
+                  onTap: _toggleReveal,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(LucideIcons.eyeOff,
+                            size: 13,
+                            color: isDark ? Colors.white60 : Colors.black54),
+                        const SizedBox(width: 5),
+                        Text(
+                          isBn ? 'লুকান' : 'Hide',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: isDark ? Colors.white60 : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 if (_selectedOptionId != null) ...[
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         _selectedOptionId == q.correctOptionId
                             ? LucideIcons.checkCircle2
                             : LucideIcons.xCircle,
-                        size: 14,
+                        size: 13,
                         color: _selectedOptionId == q.correctOptionId
                             ? AppColors.success
                             : AppColors.error,
@@ -455,14 +413,14 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
                       Text(
                         isBn
                             ? (_selectedOptionId == q.correctOptionId
-                                ? 'আপনার উত্তর সঠিক!'
-                                : 'আপনার উত্তর ভুল')
+                                ? 'সঠিক উত্তর!'
+                                : 'ভুল উত্তর')
                             : (_selectedOptionId == q.correctOptionId
-                                ? 'Correct Answer!'
-                                : 'Wrong Answer'),
+                                ? 'Correct!'
+                                : 'Incorrect'),
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.bold,
                           color: _selectedOptionId == q.correctOptionId
                               ? AppColors.success
                               : AppColors.error,
@@ -473,336 +431,46 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
                 ],
               ],
             ),
-          ),
 
-          // 5. Detailed Explanation Drawer
-          if (_isRevealed && q.explanation.isNotEmpty) ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.primaryBgDark.withValues(alpha: 0.3)
-                    : AppColors.primaryBgLight.withValues(alpha: 0.6),
-                border: Border(
-                  top: BorderSide(
-                    color: AppColors.primary.withValues(alpha: 0.2),
+            // Explanation Box
+            if (q.explanation.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.primaryBgDark.withValues(alpha: 0.25)
+                      : AppColors.primaryBgLight.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.15),
                   ),
                 ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(LucideIcons.lightbulb,
-                          size: 16, color: Colors.amber),
-                      const SizedBox(width: 6),
-                      Text(
-                        isBn
-                            ? 'বিস্তারিত ব্যাখ্যা ও সমাধান:'
-                            : 'Detailed Explanation & Solution:',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  KaTexMathText(
-                    text: q.explanation,
-                    style: TextStyle(
-                      fontSize: 13,
-                      height: 1.5,
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-
-          // 6. Footer (Tags, Copy Button, Practice Single)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(
-                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                // Tags
-                Expanded(
-                  child: Wrap(
-                    spacing: 4,
-                    runSpacing: 4,
-                    children: q.tags.take(3).map((tag) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.white10
-                              : Colors.black.withValues(alpha: 0.04),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '#$tag',
-                          style: TextStyle(
-                            fontSize: 9,
-                            color: isDark
-                                ? AppColors.textMutedDark
-                                : AppColors.textMutedLight,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-
-                // Practice Single
-                if (widget.showPracticeSingle &&
-                    widget.onPracticeSingle != null) ...[
-                  OutlinedButton.icon(
-                    onPressed: widget.onPracticeSingle,
-                    icon: const Icon(LucideIcons.sparkles,
-                        size: 12, color: AppColors.primary),
-                    label: Text(
-                      isBn ? 'অনুশীলন' : 'Practice Single',
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-
-                // Copy Button
-                InkWell(
-                  onTap: _copyQuestionToClipboard,
-                  borderRadius: BorderRadius.circular(4),
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                    child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Icon(
-                          _copied ? LucideIcons.check : LucideIcons.copy,
-                          size: 13,
-                          color: _copied
-                              ? AppColors.success
-                              : (isDark ? Colors.white54 : Colors.black45),
-                        ),
-                        const SizedBox(width: 4),
+                        const Icon(LucideIcons.lightbulb,
+                            size: 14, color: Colors.amber),
+                        const SizedBox(width: 5),
                         Text(
-                          isBn
-                              ? (_copied ? 'কপি হয়েছে!' : 'কপি')
-                              : (_copied ? 'Copied!' : 'Copy'),
-                          style: TextStyle(
+                          isBn ? 'ব্যাখ্যা:' : 'Explanation:',
+                          style: const TextStyle(
                             fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: _copied
-                                ? AppColors.success
-                                : (isDark ? Colors.white54 : Colors.black45),
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-
-
-  Widget _buildAnswerComparisonBanner({
-    required bool isDark,
-    required bool isBn,
-    required String correctLetter,
-    required String correctText,
-    String? userLetter,
-    String? userText,
-  }) {
-    if (userLetter != null) {
-      final isUserCorrect = _selectedOptionId == widget.question.correctOptionId;
-      if (isUserCorrect) {
-        return Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.successDark.withValues(alpha: 0.4)
-                : AppColors.successLight,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
-          ),
-          child: Row(
-            children: [
-              const Icon(LucideIcons.checkCircle2,
-                  size: 16, color: AppColors.success),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: isBn
-                            ? 'আপনার উত্তর সঠিক! '
-                            : 'Your Answer is Correct! ',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.success),
-                      ),
-                      TextSpan(
-                        text: '($correctLetter) $correctText',
-                        style: TextStyle(
-                          color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
-                        ),
-                      ),
-                    ],
-                  ),
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ),
-            ],
-          ),
-        );
-      } else {
-        return Column(
-          children: [
-            // User's Wrong Answer
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.errorDark.withValues(alpha: 0.4)
-                    : AppColors.errorLight,
-                borderRadius: BorderRadius.circular(8),
-                border:
-                    Border.all(color: AppColors.error.withValues(alpha: 0.4)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(LucideIcons.xCircle,
-                      size: 16, color: AppColors.error),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text.rich(
-                      TextSpan(
-                        children: [
-                          TextSpan(
-                            text: isBn ? 'আপনার উত্তর: ' : 'Your Answer: ',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.error),
-                          ),
-                          TextSpan(
-                            text: '($userLetter) ${userText ?? ''}',
-                            style: TextStyle(
-                              color: isDark
-                                  ? AppColors.textPrimaryDark
-                                  : AppColors.textPrimaryLight,
-                            ),
-                          ),
-                        ],
-                      ),
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 6),
-            // Correct Answer
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.successDark.withValues(alpha: 0.4)
-                    : AppColors.successLight,
-                borderRadius: BorderRadius.circular(8),
-                border:
-                    Border.all(color: AppColors.success.withValues(alpha: 0.4)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(LucideIcons.checkCircle2,
-                      size: 16, color: AppColors.success),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text.rich(
-                      TextSpan(
-                        children: [
-                          TextSpan(
-                            text: isBn ? 'সঠিক উত্তর: ' : 'Correct Answer: ',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.success),
-                          ),
-                          TextSpan(
-                            text: '($correctLetter) $correctText',
-                            style: TextStyle(
-                              color: isDark
-                                  ? AppColors.textPrimaryDark
-                                  : AppColors.textPrimaryLight,
-                            ),
-                          ),
-                        ],
-                      ),
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-      }
-    } else {
-      return Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.successDark.withValues(alpha: 0.3)
-              : AppColors.successLight,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
-        ),
-        child: Row(
-          children: [
-            const Icon(LucideIcons.checkCircle2,
-                size: 16, color: AppColors.success),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text: isBn ? 'সঠিক উত্তর: ' : 'Correct Answer: ',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.success),
-                    ),
-                    TextSpan(
-                      text: '($correctLetter) $correctText',
+                    const SizedBox(height: 6),
+                    KaTexMathText(
+                      text: q.explanation,
                       style: TextStyle(
+                        fontSize: 13,
+                        height: 1.45,
                         color: isDark
                             ? AppColors.textPrimaryDark
                             : AppColors.textPrimaryLight,
@@ -810,13 +478,12 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
                     ),
                   ],
                 ),
-                style: const TextStyle(fontSize: 12),
               ),
-            ),
+            ],
           ],
-        ),
-      );
-    }
+        ],
+      ),
+    );
   }
 
   Widget _buildOptionTile({
@@ -841,14 +508,14 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
       if (isCorrect) {
         borderColor = AppColors.success;
         bgColor = isDark
-            ? AppColors.successDark.withValues(alpha: 0.35)
+            ? AppColors.successDark.withValues(alpha: 0.25)
             : AppColors.successLight;
         badgeBg = AppColors.success;
         badgeFg = Colors.white;
       } else if (isSelected && !isCorrect) {
         borderColor = AppColors.error;
         bgColor = isDark
-            ? AppColors.errorDark.withValues(alpha: 0.35)
+            ? AppColors.errorDark.withValues(alpha: 0.25)
             : AppColors.errorLight;
         badgeBg = AppColors.error;
         badgeFg = Colors.white;
@@ -863,13 +530,14 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-                color: borderColor,
-                width: isRevealed && (isCorrect || isSelected) ? 1.5 : 1),
+              color: borderColor,
+              width: isRevealed && (isCorrect || isSelected) ? 1.5 : 1,
+            ),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -885,10 +553,10 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
                 ),
                 child: isRevealed && isCorrect
                     ? const Icon(LucideIcons.check,
-                        size: 14, color: Colors.white)
+                        size: 13, color: Colors.white)
                     : isRevealed && isSelected && !isCorrect
                         ? const Icon(LucideIcons.x,
-                            size: 14, color: Colors.white)
+                            size: 13, color: Colors.white)
                         : Text(
                             letter,
                             style: TextStyle(
@@ -919,62 +587,30 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
                 ),
               ),
 
-              // Status Tag Badge
+              // Minimal Trailing Indicator (✓ or ✗)
               if (isRevealed) ...[
-                if (isSelected && isCorrect)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.successLight,
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                          color: AppColors.success.withValues(alpha: 0.3)),
-                    ),
+                if (isCorrect)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 2, left: 4),
                     child: Text(
-                      isBn
-                          ? 'আপনার উত্তর (সঠিক) ✓'
-                          : 'Your Answer (Correct) ✓',
-                      style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.success),
+                      '✓',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.success,
+                      ),
                     ),
                   )
                 else if (isSelected && !isCorrect)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.errorLight,
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                          color: AppColors.error.withValues(alpha: 0.3)),
-                    ),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 2, left: 4),
                     child: Text(
-                      isBn ? 'আপনার উত্তর ✗' : 'Your Answer ✗',
-                      style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.error),
-                    ),
-                  )
-                else if (!isSelected && isCorrect)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.successLight,
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                          color: AppColors.success.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      isBn ? 'সঠিক উত্তর ✓' : 'Correct Answer ✓',
-                      style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.success),
+                      '✗',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.error,
+                      ),
                     ),
                   ),
               ],
