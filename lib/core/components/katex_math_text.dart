@@ -21,6 +21,12 @@ class KaTexMathText extends StatelessWidget {
     if (raw.isEmpty) return raw;
     String s = raw;
 
+    // 0. Auto-heal literal \n into real newlines
+    s = s.replaceAll(r'\n', '\n');
+
+    // 0.1 Auto-heal double-escaped LaTeX commands (\\frac -> \frac, \\implies -> \implies, etc.)
+    s = s.replaceAllMapped(RegExp(r'\\\\([a-zA-Z]+)'), (m) => '\\${m.group(1)}');
+
     // 1. Repair false English word macros (\sin{gular} -> singular, \sec{ond} -> second)
     s = s.replaceAllMapped(
       RegExp(r'\\(sin|sec|tan|cos|log)\{([a-z]{2,})\}'),
