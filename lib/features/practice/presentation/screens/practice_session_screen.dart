@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -1003,38 +1004,100 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Detailed Explanation Card
+                            // Detailed Explanation Card (Left-Accent Notion Style)
                             if (reviewQuestion.explanation.isNotEmpty)
                               Container(
                                 width: double.infinity,
-                                padding: const EdgeInsets.all(16),
+                                padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color:
-                                      AppColors.emerald.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: AppColors.emerald
-                                        .withValues(alpha: 0.3),
+                                  color: isDark
+                                      ? AppColors.cardDark
+                                      : const Color(0xFFF8FAFC),
+                                  borderRadius: const BorderRadius.horizontal(
+                                      right: Radius.circular(14)),
+                                  border: Border(
+                                    left: const BorderSide(
+                                        color: AppColors.emerald, width: 3),
+                                    top: BorderSide(
+                                        color: isDark
+                                            ? AppColors.borderDark
+                                            : AppColors.borderLight),
+                                    right: BorderSide(
+                                        color: isDark
+                                            ? AppColors.borderDark
+                                            : AppColors.borderLight),
+                                    bottom: BorderSide(
+                                        color: isDark
+                                            ? AppColors.borderDark
+                                            : AppColors.borderLight),
                                   ),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
-                                        const Icon(LucideIcons.sparkles,
-                                            size: 16, color: AppColors.emerald),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          AppStrings.t(
-                                            ref,
-                                            'সঠিক উত্তর ও বিশদ ব্যাখ্যা',
-                                            'Correct Answer & Detailed Explanation',
-                                          ),
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.emerald,
+                                        Row(
+                                          children: [
+                                            const Icon(LucideIcons.sparkles,
+                                                size: 15,
+                                                color: AppColors.emerald),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              AppStrings.t(
+                                                ref,
+                                                'সঠিক উত্তর ও বিশদ ব্যাখ্যা',
+                                                'Correct Answer & Detailed Explanation',
+                                              ),
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.emerald,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        InkWell(
+                                          onTap: () {
+                                            HapticFeedback.selectionClick();
+                                            Clipboard.setData(ClipboardData(
+                                                text: reviewQuestion.explanation));
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                content: Text(AppStrings.t(
+                                                    ref,
+                                                    'সমাধান কপি করা হয়েছে',
+                                                    'Copied to clipboard')),
+                                                duration:
+                                                    const Duration(seconds: 1),
+                                                behavior:
+                                                    SnackBarBehavior.floating,
+                                              ),
+                                            );
+                                          },
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 6, vertical: 2),
+                                            child: Row(
+                                              children: [
+                                                const Icon(LucideIcons.copy,
+                                                    size: 12,
+                                                    color: Colors.grey),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  AppStrings.t(
+                                                      ref, 'কপি', 'Copy'),
+                                                  style: const TextStyle(
+                                                      fontSize: 11,
+                                                      color: Colors.grey),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -1283,11 +1346,13 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
                 if (details.primaryVelocity == null) return;
                 if (details.primaryVelocity! < -250) {
                   // Swiped Left -> Next Question
+                  HapticFeedback.selectionClick();
                   ref
                       .read(practiceSessionControllerProvider.notifier)
                       .nextQuestion();
                 } else if (details.primaryVelocity! > 250) {
                   // Swiped Right -> Previous Question
+                  HapticFeedback.selectionClick();
                   ref
                       .read(practiceSessionControllerProvider.notifier)
                       .previousQuestion();
@@ -1460,6 +1525,7 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
 
                         return InkWell(
                           onTap: () {
+                            HapticFeedback.lightImpact();
                             ref
                                 .read(practiceSessionControllerProvider.notifier)
                                 .selectOption(option.id);
@@ -1515,38 +1581,101 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Instant Mode Explanation
+                    // Instant Mode Explanation (Left-Accent Notion Style)
                     if (state.mode == PracticeMode.instant &&
                         isRevealed &&
                         question.explanation.isNotEmpty)
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: AppColors.emerald.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: AppColors.emerald.withValues(alpha: 0.3),
+                          color: isDark
+                              ? AppColors.cardDark
+                              : const Color(0xFFF8FAFC),
+                          borderRadius: const BorderRadius.horizontal(
+                              right: Radius.circular(14)),
+                          border: Border(
+                            left: const BorderSide(
+                                color: AppColors.emerald, width: 3),
+                            top: BorderSide(
+                                color: isDark
+                                    ? AppColors.borderDark
+                                    : AppColors.borderLight),
+                            right: BorderSide(
+                                color: isDark
+                                    ? AppColors.borderDark
+                                    : AppColors.borderLight),
+                            bottom: BorderSide(
+                                color: isDark
+                                    ? AppColors.borderDark
+                                    : AppColors.borderLight),
                           ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
                               children: [
-                                const Icon(LucideIcons.sparkles,
-                                    size: 16, color: AppColors.emerald),
-                                const SizedBox(width: 6),
-                                Text(
-                                  AppStrings.t(
-                                    ref,
-                                    'সঠিক উত্তর ও বিশদ ব্যাখ্যা',
-                                    'Correct Answer & Detailed Explanation',
-                                  ),
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.emerald,
+                                Row(
+                                  children: [
+                                    const Icon(LucideIcons.sparkles,
+                                        size: 15,
+                                        color: AppColors.emerald),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      AppStrings.t(
+                                        ref,
+                                        'সঠিক উত্তর ও বিশদ ব্যাখ্যা',
+                                        'Correct Answer & Detailed Explanation',
+                                      ),
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.emerald,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                InkWell(
+                                  onTap: () {
+                                    HapticFeedback.selectionClick();
+                                    Clipboard.setData(ClipboardData(
+                                        text: question.explanation));
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(
+                                      SnackBar(
+                                        content: Text(AppStrings.t(
+                                            ref,
+                                            'সমাধান কপি করা হয়েছে',
+                                            'Copied to clipboard')),
+                                        duration:
+                                            const Duration(seconds: 1),
+                                        behavior:
+                                            SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    child: Row(
+                                      children: [
+                                        const Icon(LucideIcons.copy,
+                                            size: 12,
+                                            color: Colors.grey),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          AppStrings.t(
+                                              ref, 'কপি', 'Copy'),
+                                          style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.grey),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
@@ -1557,7 +1686,9 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
                               style: GoogleFonts.hindSiliguri(
                                 fontSize: 13,
                                 height: 1.5,
-                                color: isDark ? Colors.white70 : Colors.black87,
+                                color: isDark
+                                    ? Colors.white70
+                                    : Colors.black87,
                               ),
                             ),
                           ],
@@ -1584,9 +1715,12 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
               children: [
                 OutlinedButton.icon(
                   onPressed: currIdx > 0
-                      ? () => ref
-                          .read(practiceSessionControllerProvider.notifier)
-                          .previousQuestion()
+                      ? () {
+                          HapticFeedback.selectionClick();
+                          ref
+                              .read(practiceSessionControllerProvider.notifier)
+                              .previousQuestion();
+                        }
                       : null,
                   icon: const Icon(LucideIcons.chevronLeft, size: 16),
                   label: Text(AppStrings.t(ref, 'পূর্ববর্তী', 'Previous')),
@@ -1602,6 +1736,7 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
                           horizontal: 20, vertical: 12),
                     ),
                     onPressed: () {
+                      HapticFeedback.mediumImpact();
                       ref
                           .read(practiceSessionControllerProvider.notifier)
                           .submitPractice();
@@ -1622,9 +1757,12 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 12),
                     ),
-                    onPressed: () => ref
-                        .read(practiceSessionControllerProvider.notifier)
-                        .nextQuestion(),
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      ref
+                          .read(practiceSessionControllerProvider.notifier)
+                          .nextQuestion();
+                    },
                     icon: const Icon(LucideIcons.chevronRight, size: 16),
                     label: Text(AppStrings.t(ref, 'পরবর্তী', 'Next')),
                   ),

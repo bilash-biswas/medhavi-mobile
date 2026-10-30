@@ -21,8 +21,8 @@ class KaTexMathText extends StatelessWidget {
     if (raw.isEmpty) return raw;
     String s = raw;
 
-    // 0. Auto-heal literal \n into real newlines
-    s = s.replaceAll(r'\n', '\n');
+    // 0. Auto-heal literal \n into real newlines (while safely protecting LaTeX commands like \neq, \nabla, \nu, \notin)
+    s = s.replaceAll(RegExp(r'\\n(?![a-zA-Z])'), '\n');
 
     // 0.1 Auto-heal double-escaped LaTeX commands (\\frac -> \frac, \\implies -> \implies, etc.)
     s = s.replaceAllMapped(RegExp(r'\\\\([a-zA-Z]+)'), (m) => '\\${m.group(1)}');

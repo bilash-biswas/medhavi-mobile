@@ -70,6 +70,7 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   bool _isSearchOpen = false;
+  bool _isCompactView = false;
 
   @override
   void initState() {
@@ -563,6 +564,24 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
               },
             ),
 
+            // Density View Toggle Icon (Compact vs Detailed)
+            IconButton(
+              tooltip: _isCompactView
+                  ? AppStrings.t(ref, 'বিস্তারিত ভিউ', 'Detailed View')
+                  : AppStrings.t(ref, 'কমপ্যাক্ট ভিউ', 'Compact View'),
+              icon: Icon(
+                _isCompactView ? LucideIcons.layoutList : LucideIcons.rows,
+                size: 20,
+                color: _isCompactView
+                    ? AppColors.primary
+                    : (isDark ? Colors.white70 : Colors.black87),
+              ),
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                setState(() => _isCompactView = !_isCompactView);
+              },
+            ),
+
             // Auto Reveal Eye Toggle Icon
             IconButton(
               tooltip: state.autoRevealAll
@@ -978,6 +997,7 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                                   onToggleBookmark: () async {
                                     await notifier.toggleBookmark(question.id);
                                   },
+                                  isCompact: _isCompactView,
                                 );
                               },
                             ),

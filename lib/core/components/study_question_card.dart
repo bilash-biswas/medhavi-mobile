@@ -24,6 +24,7 @@ class StudyQuestionCard extends StatefulWidget {
   final String removeTooltip;
   final bool showPracticeSingle;
   final VoidCallback? onPracticeSingle;
+  final bool isCompact;
 
   const StudyQuestionCard({
     super.key,
@@ -39,6 +40,7 @@ class StudyQuestionCard extends StatefulWidget {
     this.removeTooltip = 'তালিকা থেকে সরান',
     this.showPracticeSingle = false,
     this.onPracticeSingle,
+    this.isCompact = false,
   });
 
   @override
@@ -49,6 +51,7 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
   late bool _isRevealed;
   String? _selectedOptionId;
   bool _bookmarkLoading = false;
+  bool _isCompactExpanded = false;
 
   final List<String> _enOptionLetters = ['A', 'B', 'C', 'D', 'E'];
   final List<String> _bnOptionLetters = ['ক', 'খ', 'গ', 'ঘ', 'ঙ'];
@@ -112,6 +115,113 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
 
     // Dynamic Option Letters based on language
     final optionLetters = isBn ? _bnOptionLetters : _enOptionLetters;
+
+    // Compact View (Minimal UX)
+    if (widget.isCompact && !_isCompactExpanded) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : AppColors.cardLight,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () {
+              HapticFeedback.lightImpact();
+              setState(() => _isCompactExpanded = true);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      isBn
+                          ? BengaliNumeralConverter.toBengaliNumber(
+                              widget.index + 1)
+                          : '${widget.index + 1}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimaryLight,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  if (q.source != null && q.source!.isNotEmpty) ...[
+                    Text(
+                      BengaliNumeralConverter.formatBcsSource(q.source!),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Text('•',
+                        style: TextStyle(color: Colors.grey, fontSize: 10)),
+                    const SizedBox(width: 6),
+                  ],
+                  Expanded(
+                    child: Text(
+                      q.question,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimaryLight,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: _bookmarkLoading ? null : _handleBookmark,
+                    icon: Icon(
+                      widget.isBookmarked
+                          ? Icons.bookmark
+                          : Icons.bookmark_border,
+                      size: 18,
+                      color: widget.isBookmarked
+                          ? Colors.amber
+                          : (isDark ? Colors.white38 : Colors.black26),
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints:
+                        const BoxConstraints(minWidth: 26, minHeight: 26),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(LucideIcons.chevronDown,
+                      size: 16, color: AppColors.primary),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -221,10 +331,39 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
               ),
               const SizedBox(width: 4),
 
-              // Actions: Remove & Bookmark
+              // Actions: Collapse (if compact), Remove & Bookmark
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (widget.isCompact) ...[
+                    InkWell(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _isCompactExpanded = false);
+                      },
+                      borderRadius: BorderRadius.circular(6),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 4),
+                        child: Row(
+                          children: [
+                            const Icon(LucideIcons.chevronUp,
+                                size: 14, color: AppColors.primary),
+                            const SizedBox(width: 2),
+                            Text(
+                              isBn ? 'সংক্ষেপ' : 'Collapse',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                  ],
                   if (widget.onRemove != null) ...[
                     IconButton(
                       onPressed: widget.onRemove,
@@ -432,45 +571,97 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
               ],
             ),
 
-            // Explanation Box
+            // Explanation Box (Left-Accent Notion Style)
             if (q.explanation.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? AppColors.primaryBgDark.withValues(alpha: 0.25)
-                      : AppColors.primaryBgLight.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.15),
+                      ? AppColors.cardDark
+                      : const Color(0xFFF8FAFC),
+                  borderRadius: const BorderRadius.horizontal(
+                      right: Radius.circular(12)),
+                  border: Border(
+                    left: const BorderSide(
+                        color: AppColors.primary, width: 3),
+                    top: BorderSide(
+                        color: isDark
+                            ? AppColors.borderDark
+                            : AppColors.borderLight),
+                    right: BorderSide(
+                        color: isDark
+                            ? AppColors.borderDark
+                            : AppColors.borderLight),
+                    bottom: BorderSide(
+                        color: isDark
+                            ? AppColors.borderDark
+                            : AppColors.borderLight),
                   ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(LucideIcons.lightbulb,
-                            size: 14, color: Colors.amber),
-                        const SizedBox(width: 5),
-                        Text(
-                          isBn ? 'ব্যাখ্যা:' : 'Explanation:',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                        Row(
+                          children: [
+                            const Icon(LucideIcons.lightbulb,
+                                size: 14, color: Colors.amber),
+                            const SizedBox(width: 5),
+                            Text(
+                              isBn ? 'ব্যাখ্যা ও সমাধান:' : 'Explanation:',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        InkWell(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            Clipboard.setData(
+                                ClipboardData(text: q.explanation));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(isBn
+                                    ? 'সমাধান কপি করা হয়েছে'
+                                    : 'Copied to clipboard'),
+                                duration: const Duration(seconds: 1),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(6),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            child: Row(
+                              children: [
+                                const Icon(LucideIcons.copy,
+                                    size: 12, color: Colors.grey),
+                                const SizedBox(width: 4),
+                                Text(
+                                  isBn ? 'কপি' : 'Copy',
+                                  style: const TextStyle(
+                                      fontSize: 11, color: Colors.grey),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     KaTexMathText(
                       text: q.explanation,
                       style: TextStyle(
                         fontSize: 13,
-                        height: 1.45,
+                        height: 1.5,
                         color: isDark
                             ? AppColors.textPrimaryDark
                             : AppColors.textPrimaryLight,
