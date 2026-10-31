@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:medhavi_mobile/core/models/app_version_info.dart';
 
 class AppUpdateService {
-  static const String currentVersion = '1.0.4';
+  static const String currentVersion = '1.0.5';
   static const int currentBuildNumber = 5;
 
   static const MethodChannel _channel =
