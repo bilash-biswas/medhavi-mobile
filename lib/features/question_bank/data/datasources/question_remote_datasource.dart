@@ -193,8 +193,9 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
         q = q.where('tags', arrayContainsAny: variants);
       }
 
-      // Default status to published
+      // Default status to published and strictly show only verified questions
       q = q.where('status', isEqualTo: 'published');
+      q = q.where('adminVerified', isEqualTo: true);
 
       if (includeOrderBy) {
         q = q.orderBy('createdAt', descending: true);
@@ -256,7 +257,7 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
 
     final idMap = {for (final q in results) q.id: q};
     return ids
-        .where((id) => idMap.containsKey(id))
+        .where((id) => idMap.containsKey(id) && idMap[id]!.adminVerified)
         .map((id) => idMap[id]!)
         .toList();
   }
@@ -323,6 +324,7 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
     }
 
     q = q.where('status', isEqualTo: 'published');
+    q = q.where('adminVerified', isEqualTo: true);
     return q;
   }
 
