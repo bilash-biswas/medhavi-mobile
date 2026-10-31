@@ -125,8 +125,26 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
     },
   ];
 
-  /// Normalizes batch and subject tags to match Firestore storage convention
-  /// e.g. "50th-bcs" -> "50thbcs-bcs", "10th-bcs" -> "10thbcs-bcs"
+  /// Normalizes batch and subject tags to match all Firestore tag variations
+  /// e.g. "42nd-bcs" -> ["42nd-bcs", "42ndbcs", "42ndbcs-bcs", "#42nd-bcs", "#42ndbcs", "#42ndbcs-bcs"]
+  static List<String> getTagVariants(String rawTag) {
+    final tag = rawTag.toLowerCase().trim();
+    final match = RegExp(r'^#?(\d+(?:st|nd|rd|th))-?bcs$').firstMatch(tag);
+    if (match != null) {
+      final prefix = match.group(1)!;
+      return [
+        '$prefix-bcs',
+        '${prefix}bcs',
+        '${prefix}bcs-bcs',
+        '#$prefix-bcs',
+        '#${prefix}bcs',
+        '#${prefix}bcs-bcs',
+      ];
+    }
+    return [tag, '#$tag'];
+  }
+
+  /// Legacy helper for unit tests and backwards compatibility
   static String? normalizeTag(String? rawTag) {
     if (rawTag == null || rawTag.trim().isEmpty) return null;
     final tag = rawTag.toLowerCase().trim();
@@ -171,8 +189,8 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
       }
 
       if (filters.tag != null && filters.tag!.isNotEmpty) {
-        final normalizedTag = normalizeTag(filters.tag);
-        q = q.where('tags', arrayContains: normalizedTag);
+        final variants = getTagVariants(filters.tag!);
+        q = q.where('tags', arrayContainsAny: variants);
       }
 
       // Default status to published
@@ -300,8 +318,8 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
     }
 
     if (filters.tag != null && filters.tag!.isNotEmpty) {
-      final normalizedTag = normalizeTag(filters.tag);
-      q = q.where('tags', arrayContains: normalizedTag);
+      final variants = getTagVariants(filters.tag!);
+      q = q.where('tags', arrayContainsAny: variants);
     }
 
     q = q.where('status', isEqualTo: 'published');
