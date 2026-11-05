@@ -119,6 +119,7 @@ class DailyChallengeController extends Notifier<DailyChallengeState> {
       state = state.copyWith(
         isLoading: false,
         questions: qs,
+        errorMessage: null,
         alreadyCompletedToday: isDone,
         isCompleted: isDone,
       );
