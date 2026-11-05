@@ -17,6 +17,7 @@ class DailyChallengeState {
   final int currentStreak;
   final int longestStreak;
   final String dateStr;
+  final int? savedScore;
 
   const DailyChallengeState({
     this.isLoading = true,
@@ -30,6 +31,7 @@ class DailyChallengeState {
     this.currentStreak = 0,
     this.longestStreak = 0,
     this.dateStr = '',
+    this.savedScore,
   });
 
   QuestionEntity? get currentQuestion =>
@@ -38,6 +40,7 @@ class DailyChallengeState {
           : null;
 
   int get score {
+    if (savedScore != null) return savedScore!;
     int total = 0;
     for (final q in questions) {
       if (selectedAnswers[q.id] == q.correctOptionId) {
@@ -59,6 +62,7 @@ class DailyChallengeState {
     int? currentStreak,
     int? longestStreak,
     String? dateStr,
+    int? savedScore,
   }) {
     return DailyChallengeState(
       isLoading: isLoading ?? this.isLoading,
@@ -73,6 +77,7 @@ class DailyChallengeState {
       currentStreak: currentStreak ?? this.currentStreak,
       longestStreak: longestStreak ?? this.longestStreak,
       dateStr: dateStr ?? this.dateStr,
+      savedScore: savedScore ?? this.savedScore,
     );
   }
 }
@@ -108,16 +113,17 @@ class DailyChallengeController extends Notifier<DailyChallengeState> {
     state = state.copyWith(isLoading: true, dateStr: dateStr);
 
     try {
-      bool isDone = false;
+      DailyAttemptData? attemptData;
       final uid = _userId;
       if (uid != null) {
         try {
-          isDone = await _dataSource.hasUserCompletedDailyToday(uid, dateStr);
+          attemptData = await _dataSource.getTodayDailyAttempt(uid, dateStr);
         } catch (_) {}
       }
 
       final qs = await _dataSource.getTodayDailyQuestions(dateStr);
       final verifiedOnly = qs.where((q) => q.adminVerified).toList();
+      final isDone = attemptData?.hasCompleted == true;
 
       state = state.copyWith(
         isLoading: false,
@@ -127,6 +133,10 @@ class DailyChallengeController extends Notifier<DailyChallengeState> {
             : null,
         alreadyCompletedToday: isDone,
         isCompleted: isDone,
+        savedScore: isDone ? attemptData?.score : null,
+        durationSeconds: isDone ? (attemptData?.durationSeconds ?? 0) : 0,
+        currentStreak: isDone ? (attemptData?.streakDays ?? 1) : 0,
+        selectedAnswers: isDone ? (attemptData?.selectedAnswers ?? const {}) : const {},
       );
 
       if (!isDone && verifiedOnly.isNotEmpty) {
@@ -138,6 +148,18 @@ class DailyChallengeController extends Notifier<DailyChallengeState> {
         errorMessage: 'আজকের দৈনিক চ্যালেঞ্জ লোড করা সম্ভব হয়নি। আবার চেষ্টা করুন।',
       );
     }
+  }
+
+  void restartAsPractice() {
+    _timer?.cancel();
+    state = state.copyWith(
+      isCompleted: false,
+      currentIndex: 0,
+      selectedAnswers: {},
+      durationSeconds: 0,
+      savedScore: null,
+    );
+    _startTimer();
   }
 
   void _startTimer() {

@@ -9,9 +9,26 @@ final dailyChallengeRemoteDataSourceProvider =
   return DailyChallengeRemoteDataSourceImpl(FirebaseFirestore.instance);
 });
 
+class DailyAttemptData {
+  final bool hasCompleted;
+  final int? score;
+  final int? durationSeconds;
+  final int? streakDays;
+  final Map<String, String> selectedAnswers;
+
+  const DailyAttemptData({
+    required this.hasCompleted,
+    this.score,
+    this.durationSeconds,
+    this.streakDays,
+    this.selectedAnswers = const {},
+  });
+}
+
 abstract class DailyChallengeRemoteDataSource {
   Future<List<QuestionEntity>> getTodayDailyQuestions(String dateStr);
   Future<bool> hasUserCompletedDailyToday(String userId, String dateStr);
+  Future<DailyAttemptData> getTodayDailyAttempt(String userId, String dateStr);
   Future<Map<String, dynamic>> recordDailyAttempt({
     required String userId,
     required String dateStr,
@@ -481,19 +498,109 @@ class DailyChallengeRemoteDataSourceImpl
 
   @override
   Future<bool> hasUserCompletedDailyToday(String userId, String dateStr) async {
+    final attempt = await getTodayDailyAttempt(userId, dateStr);
+    return attempt.hasCompleted;
+  }
+
+  @override
+  Future<DailyAttemptData> getTodayDailyAttempt(String userId, String dateStr) async {
+    int? score;
+    int? duration;
+    int? streak;
+    final answersMap = <String, String>{};
+    bool completed = false;
+
+    // 1. Check leaderboardScores document for today
+    try {
+      final lbDoc = await _firestore
+          .collection('leaderboardScores')
+          .doc('daily_${dateStr}_$userId')
+          .get();
+      if (lbDoc.exists && lbDoc.data() != null) {
+        final d = lbDoc.data()!;
+        completed = true;
+        score = (d['score'] as num?)?.toInt();
+        streak = (d['streakDays'] as num?)?.toInt();
+      }
+    } catch (_) {}
+
+    // 2. Check attempts collection (Mobile format)
     try {
       final snap = await _firestore
           .collection('attempts')
           .where('userId', isEqualTo: userId)
-          .where('type', isEqualTo: 'daily')
           .where('date', isEqualTo: dateStr)
           .limit(1)
           .get();
 
-      return snap.docs.isNotEmpty;
-    } catch (_) {
-      return false;
+      if (snap.docs.isNotEmpty) {
+        final d = snap.docs.first.data();
+        completed = true;
+        score = score ?? (d['score'] as num?)?.toInt();
+        duration = (d['durationSeconds'] as num?)?.toInt();
+
+        final rawAnswers = d['answers'] as List<dynamic>? ?? [];
+        for (final item in rawAnswers) {
+          if (item is Map) {
+            final qId = item['questionId']?.toString();
+            final optId = item['selectedOptionId']?.toString();
+            if (qId != null && optId != null) {
+              answersMap[qId] = optId;
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 3. Fallback to check Web daily attempt format (mode == 'daily')
+    if (!completed) {
+      try {
+        final webSnap = await _firestore
+            .collection('attempts')
+            .where('userId', isEqualTo: userId)
+            .where('mode', isEqualTo: 'daily')
+            .limit(5)
+            .get();
+
+        for (final doc in webSnap.docs) {
+          final data = doc.data();
+          if (data['mockTestId'] == 'daily_$dateStr' || data['dailyDate'] == dateStr) {
+            completed = true;
+            score = score ?? (data['score'] as num?)?.toInt();
+            duration = (data['durationSeconds'] as num?)?.toInt();
+            final rawAnswers = data['answers'] as List<dynamic>? ?? [];
+            for (final item in rawAnswers) {
+              if (item is Map) {
+                final qId = item['questionId']?.toString();
+                final optId = item['selectedOptionId']?.toString();
+                if (qId != null && optId != null) {
+                  answersMap[qId] = optId;
+                }
+              }
+            }
+            break;
+          }
+        }
+      } catch (_) {}
     }
+
+    // 4. Check user profile for streak
+    if (completed && streak == null) {
+      try {
+        final userDoc = await _firestore.collection('users').doc(userId).get();
+        if (userDoc.exists && userDoc.data() != null) {
+          streak = (userDoc.data()!['currentStreak'] as num?)?.toInt();
+        }
+      } catch (_) {}
+    }
+
+    return DailyAttemptData(
+      hasCompleted: completed,
+      score: score,
+      durationSeconds: duration,
+      streakDays: streak,
+      selectedAnswers: answersMap,
+    );
   }
 
   @override

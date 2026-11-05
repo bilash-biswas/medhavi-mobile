@@ -63,17 +63,21 @@ class _DailyChallengeScreenState extends ConsumerState<DailyChallengeScreen> {
   String _generateWordleCard(DailyChallengeState state, bool isBn) {
     final buffer = StringBuffer();
     buffer.writeln('মেধাবী দৈনিক চ্যালেঞ্জ • ${state.dateStr}');
-    final accuracy = (state.score /
-            (state.questions.isEmpty ? 1 : state.questions.length) *
-            100)
-        .round();
+    final total = state.questions.isEmpty ? 5 : state.questions.length;
+    final score = state.score;
+    final accuracy = (score / total * 100).round();
     buffer.writeln(
-        'স্কোর: ${state.score}/${state.questions.length} ($accuracy%) | সময়: ${_formatDuration(state.durationSeconds)}');
+        'স্কোর: $score/$total ($accuracy%) | সময়: ${_formatDuration(state.durationSeconds)}');
 
-    final emojiRow = state.questions.map((q) {
-      final sel = state.selectedAnswers[q.id];
-      return sel == q.correctOptionId ? '🟩' : '🟥';
-    }).join('');
+    String emojiRow;
+    if (state.selectedAnswers.isNotEmpty) {
+      emojiRow = state.questions.map((q) {
+        final sel = state.selectedAnswers[q.id];
+        return sel == q.correctOptionId ? '🟩' : '🟥';
+      }).join('');
+    } else {
+      emojiRow = List.generate(total, (i) => i < score ? '🟩' : '⬜').join('');
+    }
     buffer.writeln(emojiRow);
     if (state.currentStreak > 0) {
       buffer.writeln('স্ট্রিক: ${state.currentStreak} দিন 🔥');
@@ -585,6 +589,39 @@ class _DailyChallengeScreenState extends ConsumerState<DailyChallengeScreen> {
         ),
         const SizedBox(height: 16),
 
+        // Retake / Practice Action Button
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              ref.read(dailyChallengeControllerProvider.notifier).restartAsPractice();
+            },
+            icon: const Icon(LucideIcons.rotateCcw, size: 16),
+            label: Text(
+              AppStrings.t(
+                ref,
+                'পুনরায় অনুশীলন করুন (Practice Mode)',
+                'Practice Questions Again',
+              ),
+              style: GoogleFonts.hindSiliguri(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              elevation: 0,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
         // 2. Wordle-Style Copyable Share Card
         Container(
           padding: const EdgeInsets.all(16),
@@ -710,7 +747,9 @@ class _DailyChallengeScreenState extends ConsumerState<DailyChallengeScreen> {
           final idx = entry.key;
           final q = entry.value;
           final userSelected = state.selectedAnswers[q.id];
-          final isCorrect = userSelected == q.correctOptionId;
+          final hasUserAnswer = userSelected != null;
+          final isCorrect = hasUserAnswer && userSelected == q.correctOptionId;
+          final isReviewMode = state.alreadyCompletedToday && state.selectedAnswers.isEmpty;
 
           return Card(
             margin: const EdgeInsets.only(bottom: 10),
@@ -718,15 +757,25 @@ class _DailyChallengeScreenState extends ConsumerState<DailyChallengeScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(
-                color: isCorrect
-                    ? AppColors.success.withValues(alpha: 0.4)
-                    : AppColors.error.withValues(alpha: 0.4),
+                color: isReviewMode
+                    ? AppColors.primary.withValues(alpha: 0.3)
+                    : isCorrect
+                        ? AppColors.success.withValues(alpha: 0.4)
+                        : AppColors.error.withValues(alpha: 0.4),
               ),
             ),
             child: ExpansionTile(
               leading: Icon(
-                isCorrect ? LucideIcons.checkCircle2 : LucideIcons.xCircle,
-                color: isCorrect ? AppColors.success : AppColors.error,
+                isReviewMode
+                    ? LucideIcons.bookOpen
+                    : isCorrect
+                        ? LucideIcons.checkCircle2
+                        : LucideIcons.xCircle,
+                color: isReviewMode
+                    ? AppColors.primary
+                    : isCorrect
+                        ? AppColors.success
+                        : AppColors.error,
                 size: 20,
               ),
               title: Text(
@@ -736,12 +785,18 @@ class _DailyChallengeScreenState extends ConsumerState<DailyChallengeScreen> {
                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
               ),
               subtitle: Text(
-                isCorrect
-                    ? AppStrings.t(ref, 'সঠিক উত্তর', 'Correct')
-                    : AppStrings.t(ref, 'ভুল উত্তর', 'Incorrect'),
+                isReviewMode
+                    ? AppStrings.t(ref, 'সঠিক সমাধান ও KaTeX ব্যাখ্যা', 'Solution & Explanation')
+                    : isCorrect
+                        ? AppStrings.t(ref, 'সঠিক উত্তর', 'Correct')
+                        : AppStrings.t(ref, 'ভুল উত্তর', 'Incorrect'),
                 style: TextStyle(
                   fontSize: 11,
-                  color: isCorrect ? AppColors.success : AppColors.error,
+                  color: isReviewMode
+                      ? AppColors.primary
+                      : isCorrect
+                          ? AppColors.success
+                          : AppColors.error,
                 ),
               ),
               children: [
@@ -807,8 +862,8 @@ class _DailyChallengeScreenState extends ConsumerState<DailyChallengeScreen> {
                             color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(
-                            q.explanation,
+                          child: KaTexMathText(
+                            text: q.explanation,
                             style: TextStyle(
                               fontSize: 12,
                               color: isDark
