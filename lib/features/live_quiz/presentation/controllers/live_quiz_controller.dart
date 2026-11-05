@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:medhavi_mobile/features/question_bank/domain/entities/question_entity.dart';
+import 'package:medhavi_mobile/features/question_bank/data/datasources/question_remote_datasource.dart';
+import 'package:medhavi_mobile/features/question_bank/presentation/controllers/question_bank_controller.dart';
 
 class LiveQuizState {
   final List<QuestionEntity> questions;
@@ -96,12 +98,40 @@ class LiveQuizController extends Notifier<LiveQuizState> {
     );
   }
 
-  void startQuiz({List<QuestionEntity>? customQuestions, int durationSeconds = 300}) {
+  Future<void> startQuiz({
+    List<QuestionEntity>? customQuestions,
+    int durationSeconds = 300,
+    String? subjectId,
+  }) async {
     _timer?.cancel();
-    final verified = customQuestions != null
-        ? customQuestions.where((q) => q.adminVerified).toList()
-        : _getSampleQuizQuestions();
-    final qList = verified.isNotEmpty ? verified : _getSampleQuizQuestions();
+    List<QuestionEntity> qList = [];
+
+    if (customQuestions != null && customQuestions.isNotEmpty) {
+      qList = customQuestions.where((q) => q.adminVerified).toList();
+    }
+
+    if (qList.isEmpty) {
+      try {
+        final qRemote = ref.read(questionRemoteDataSourceProvider);
+        final res = await qRemote.getQuestions(
+          filters: QuestionFilterParams(
+            examId: 'exam_bcs',
+            subjectId: subjectId,
+          ),
+          pageSize: durationSeconds > 300 ? 15 : 10,
+        );
+        final verified = res.questions.where((q) => q.adminVerified).toList();
+        if (verified.isNotEmpty) {
+          verified.shuffle();
+          final count = durationSeconds > 300 ? 10 : 5;
+          qList = verified.take(count).toList();
+        }
+      } catch (_) {}
+    }
+
+    if (qList.isEmpty) {
+      qList = _getSampleQuizQuestions();
+    }
 
     state = LiveQuizState(
       questions: qList,

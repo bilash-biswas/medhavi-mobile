@@ -202,7 +202,7 @@ class LiveQuizHubScreen extends ConsumerWidget {
               onTap: () {
                 ref
                     .read(liveQuizControllerProvider.notifier)
-                    .startQuiz(durationSeconds: 600);
+                    .startQuiz(durationSeconds: 600, subjectId: 'sub_bcs_math');
                 context.push('/live-quiz/exam');
               },
             ),
@@ -218,7 +218,7 @@ class LiveQuizHubScreen extends ConsumerWidget {
               onTap: () {
                 ref
                     .read(liveQuizControllerProvider.notifier)
-                    .startQuiz(durationSeconds: 720);
+                    .startQuiz(durationSeconds: 720, subjectId: 'sub_bcs_bangla');
                 context.push('/live-quiz/exam');
               },
             ),

@@ -167,22 +167,29 @@ class LeaderboardScreen extends ConsumerWidget {
                       ),
                     ),
 
-                    // Top 3 Podium
-                    if (top3.length >= 3)
+                    // Top 3 Podium or Empty State
+                    if (state.isLoading)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (state.entries.isEmpty)
+                      _EmptyLeaderboardState(isDark: isDark)
+                    else ...[
                       _Top3Podium(top3: top3, isDark: isDark),
-                    const SizedBox(height: 16),
-
-                    // 4th and beyond
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: remaining.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) {
-                        final item = remaining[index];
-                        return _RankCard(entry: item, isDark: isDark);
-                      },
-                    ),
+                      const SizedBox(height: 16),
+                      if (remaining.isNotEmpty)
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: remaining.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 8),
+                          itemBuilder: (context, index) {
+                            final item = remaining[index];
+                            return _RankCard(entry: item, isDark: isDark);
+                          },
+                        ),
+                    ],
                     const SizedBox(height: 80), // Padding for sticky bottom
                   ],
                 ),
@@ -256,9 +263,11 @@ class _Top3Podium extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (top3.isEmpty) return const SizedBox.shrink();
+
     final first = top3[0];
-    final second = top3[1];
-    final third = top3[2];
+    final second = top3.length > 1 ? top3[1] : null;
+    final third = top3.length > 2 ? top3[2] : null;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
@@ -280,13 +289,16 @@ class _Top3Podium extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           // 2nd Place (Left)
-          _PodiumItem(
-            entry: second,
-            rank: 2,
-            ringColor: const Color(0xFF94A3B8), // Silver
-            height: 100,
-            isDark: isDark,
-          ),
+          if (second != null)
+            _PodiumItem(
+              entry: second,
+              rank: 2,
+              ringColor: const Color(0xFF94A3B8), // Silver
+              height: 100,
+              isDark: isDark,
+            )
+          else if (third != null)
+            const SizedBox(width: 80),
 
           // 1st Place (Center - Highest)
           _PodiumItem(
@@ -299,12 +311,84 @@ class _Top3Podium extends StatelessWidget {
           ),
 
           // 3rd Place (Right)
-          _PodiumItem(
-            entry: third,
-            rank: 3,
-            ringColor: const Color(0xFFD97706), // Bronze
-            height: 80,
-            isDark: isDark,
+          if (third != null)
+            _PodiumItem(
+              entry: third,
+              rank: 3,
+              ringColor: const Color(0xFFD97706), // Bronze
+              height: 80,
+              isDark: isDark,
+            )
+          else if (second != null)
+            const SizedBox(width: 80),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyLeaderboardState extends ConsumerWidget {
+  final bool isDark;
+
+  const _EmptyLeaderboardState({required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 24),
+      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.amber.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(LucideIcons.trophy, size: 40, color: Colors.amber),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            AppStrings.t(ref, 'মেধাতালিকা এখনো শুরু হয়নি', 'No rankings recorded yet'),
+            style: GoogleFonts.hindSiliguri(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            AppStrings.t(
+              ref,
+              'দৈনিক চ্যালেঞ্জ বা অনুশীলন সম্পন্ন করে প্রথম স্থান অধিকার করুন!',
+              'Complete daily challenges or practice sessions to claim the #1 rank!',
+            ),
+            textAlign: TextAlign.center,
+            style: GoogleFonts.hindSiliguri(
+              fontSize: 13,
+              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+            ),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () => context.push('/daily'),
+            icon: const Icon(LucideIcons.flame, size: 16),
+            label: Text(
+              AppStrings.t(ref, 'দৈনিক চ্যালেঞ্জ খেলুন', 'Play Daily Challenge'),
+              style: GoogleFonts.hindSiliguri(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
           ),
         ],
       ),

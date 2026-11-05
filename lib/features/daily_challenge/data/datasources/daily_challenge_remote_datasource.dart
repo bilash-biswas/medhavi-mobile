@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:medhavi_mobile/features/question_bank/domain/entities/question_entity.dart';
+import 'package:medhavi_mobile/features/leaderboard/data/datasources/leaderboard_remote_datasource.dart';
 
 final dailyChallengeRemoteDataSourceProvider =
     Provider<DailyChallengeRemoteDataSource>((ref) {
@@ -556,6 +557,20 @@ class DailyChallengeRemoteDataSourceImpl
         'lastActiveDate': dateStr,
         'totalDailyCompleted': FieldValue.increment(1),
       }, SetOptions(merge: true));
+
+      // Record to shared national Leaderboard
+      final displayName = userData['name'] as String? ??
+          userData['displayName'] as String? ??
+          'বিসিএস প্রার্থী';
+      final lbSource = LeaderboardRemoteDataSourceImpl(_firestore);
+      await lbSource.recordScore(
+        userId: userId,
+        displayName: displayName,
+        scoreToAdd: score,
+        questionsAttempted: totalQuestions,
+        streakDays: newStreak,
+        targetBatch: userData['targetExam'] as String? ?? '৪৭তম বিসিএস ক্যাডার',
+      );
     } catch (_) {
       // non-blocking
     }

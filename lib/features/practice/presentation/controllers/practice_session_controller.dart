@@ -5,6 +5,7 @@ import 'package:medhavi_mobile/features/question_bank/data/datasources/question_
 import 'package:medhavi_mobile/features/question_bank/domain/entities/question_entity.dart';
 import 'package:medhavi_mobile/features/question_bank/presentation/controllers/question_bank_controller.dart';
 import 'package:medhavi_mobile/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:medhavi_mobile/features/leaderboard/data/datasources/leaderboard_remote_datasource.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum PracticeMode {
@@ -396,6 +397,21 @@ class PracticeSessionController extends Notifier<PracticeSessionState> {
         'totalCorrect': FieldValue.increment(correctCount),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+
+      // Record to shared national Leaderboard
+      if (correctCount > 0) {
+        final displayName = user.displayName?.trim().isNotEmpty == true
+            ? user.displayName!
+            : 'বিসিএস পরীক্ষার্থী';
+        final lbSource = ref.read(leaderboardRemoteDataSourceProvider);
+        await lbSource.recordScore(
+          userId: user.uid,
+          displayName: displayName,
+          scoreToAdd: correctCount,
+          questionsAttempted: answeredCount,
+          streakDays: nextStreak,
+        );
+      }
     } catch (e) {
       debugPrint('Notice: Could not update user streak in Firestore: $e');
     }
