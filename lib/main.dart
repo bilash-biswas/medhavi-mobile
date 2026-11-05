@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'firebase_options.dart';
+import 'core/services/app_update_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
 import 'core/localization/locale_controller.dart';
@@ -14,7 +15,10 @@ void main() async {
   // 1. Initialize Hive for offline caching
   await Hive.initFlutter();
 
-  // 2. Initialize Firebase targeting studyhub-bd-39887
+  // 2. Initialize native package version & build code
+  await AppUpdateService.initVersion();
+
+  // 3. Initialize Firebase targeting studyhub-bd-39887
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,

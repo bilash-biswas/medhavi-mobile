@@ -7,8 +7,12 @@ import 'package:path_provider/path_provider.dart';
 import 'package:medhavi_mobile/core/models/app_version_info.dart';
 
 class AppUpdateService {
-  static const String currentVersion = '1.0.5';
-  static const int currentBuildNumber = 5;
+  static const String fallbackVersion = '1.0.7';
+  static const int fallbackBuildNumber = 8;
+
+  static String currentVersion = fallbackVersion;
+  static int currentBuildNumber = fallbackBuildNumber;
+  static bool _initialized = false;
 
   static const MethodChannel _channel =
       MethodChannel('bd.medhavi.medhavi_mobile/app_updater');
@@ -18,8 +22,26 @@ class AppUpdateService {
   AppUpdateService({FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
+  /// Loads real package version and build number dynamically from the OS
+  static Future<void> initVersion() async {
+    if (!Platform.isAndroid) return;
+    try {
+      final res = await _channel.invokeMapMethod<String, dynamic>('getAppVersion');
+      if (res != null) {
+        currentVersion = res['versionName'] as String? ?? fallbackVersion;
+        currentBuildNumber = res['buildNumber'] as int? ?? fallbackBuildNumber;
+        _initialized = true;
+      }
+    } catch (e) {
+      debugPrint('Notice: Native getAppVersion channel unavailable ($e), using fallback $fallbackVersion+$fallbackBuildNumber');
+    }
+  }
+
   /// Check whether an update is available compared to the current build
   Future<AppVersionInfo?> checkRemoteVersion() async {
+    if (!_initialized) {
+      await initVersion();
+    }
     // 1. Try Firestore First
     try {
       final doc = await _firestore
