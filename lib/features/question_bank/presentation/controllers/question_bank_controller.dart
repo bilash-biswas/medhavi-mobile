@@ -26,6 +26,8 @@ class QuestionBankState {
   final String selectedDifficulty;
   final String searchQuery;
   final bool autoRevealAll;
+  final bool isBookmarkOnly;
+  final String selectedBatchEra;
   final List<Map<String, dynamic>> subjects;
   final Map<String, int> subjectCounts;
   final int totalMatchingCount;
@@ -45,6 +47,8 @@ class QuestionBankState {
     this.selectedDifficulty = 'all',
     this.searchQuery = '',
     this.autoRevealAll = false,
+    this.isBookmarkOnly = false,
+    this.selectedBatchEra = 'all',
     this.subjects = const [],
     this.subjectCounts = const {},
     this.totalMatchingCount = 0,
@@ -65,6 +69,8 @@ class QuestionBankState {
     String? selectedDifficulty,
     String? searchQuery,
     bool? autoRevealAll,
+    bool? isBookmarkOnly,
+    String? selectedBatchEra,
     List<Map<String, dynamic>>? subjects,
     Map<String, int>? subjectCounts,
     int? totalMatchingCount,
@@ -84,6 +90,8 @@ class QuestionBankState {
       selectedDifficulty: selectedDifficulty ?? this.selectedDifficulty,
       searchQuery: searchQuery ?? this.searchQuery,
       autoRevealAll: autoRevealAll ?? this.autoRevealAll,
+      isBookmarkOnly: isBookmarkOnly ?? this.isBookmarkOnly,
+      selectedBatchEra: selectedBatchEra ?? this.selectedBatchEra,
       subjects: subjects ?? this.subjects,
       subjectCounts: subjectCounts ?? this.subjectCounts,
       totalMatchingCount: totalMatchingCount ?? this.totalMatchingCount,
@@ -93,13 +101,17 @@ class QuestionBankState {
     );
   }
 
-  /// Filtered questions based on client-side search query
+  /// Filtered questions based on client-side search query & bookmark filter
   List<QuestionEntity> get filteredQuestions {
+    var list = questions;
+    if (isBookmarkOnly) {
+      list = list.where((q) => bookmarkedIds.contains(q.id)).toList();
+    }
     if (searchQuery.trim().isEmpty) {
-      return questions;
+      return list;
     }
     final query = searchQuery.trim().toLowerCase();
-    return questions.where((q) {
+    return list.where((q) {
       final matchesText = q.question.toLowerCase().contains(query);
       final matchesBangla = q.textEn?.toLowerCase().contains(query) ?? false;
       final matchesTag = q.tags.any((t) => t.toLowerCase().contains(query));
@@ -244,12 +256,22 @@ class QuestionBankController extends Notifier<QuestionBankState> {
     loadInitialQuestions();
   }
 
+  void toggleBookmarkOnly() {
+    state = state.copyWith(isBookmarkOnly: !state.isBookmarkOnly);
+  }
+
+  void setBatchEra(String era) {
+    state = state.copyWith(selectedBatchEra: era);
+  }
+
   void resetAllFilters() {
     state = state.copyWith(
       selectedBatchTag: '',
       selectedSubjectId: '',
       selectedDifficulty: 'all',
       searchQuery: '',
+      isBookmarkOnly: false,
+      selectedBatchEra: 'all',
     );
     loadInitialQuestions();
   }

@@ -312,137 +312,141 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                 ),
             ],
 
-            // 0.5 Live Welcome & Continuous Streak Status Card
-            Container(
-              padding: const EdgeInsets.all(14),
-              margin: const EdgeInsets.only(bottom: 14),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.cardDark : Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: analytics.streakDays > 0 && !analytics.practicedToday
-                      ? Colors.amber.withValues(alpha: 0.6)
-                      : (isDark
-                          ? AppColors.borderDark
-                          : AppColors.borderLight),
+            // 0.5 Hero Daily Challenge & Continuous Streak Banner
+            InkWell(
+              onTap: () => context.push('/daily'),
+              borderRadius: BorderRadius.circular(18),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isDark
+                        ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+                        : [const Color(0xFFFFF7ED), Colors.white],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: Colors.orange.withValues(alpha: 0.4),
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.orange.withValues(alpha: isDark ? 0.1 : 0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: analytics.streakDays > 0
-                          ? Colors.orange.withValues(alpha: 0.14)
-                          : Colors.grey.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(14),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        LucideIcons.flame,
+                        color: Colors.orange,
+                        size: 24,
+                      ),
                     ),
-                    child: Icon(
-                      LucideIcons.flame,
-                      color: analytics.streakDays > 0
-                          ? Colors.orange
-                          : Colors.grey,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                isBn
-                                    ? 'স্বাগতম, $userName!'
-                                    : 'Welcome, $userName!',
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.hindSiliguri(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isBn ? 'স্বাগতম, $userName!' : 'Welcome, $userName!',
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.hindSiliguri(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white70 : Colors.black54,
                             ),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 7, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: analytics.streakDays > 0
-                                    ? Colors.orange.withValues(alpha: 0.14)
-                                    : Colors.grey.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                isBn
-                                    ? '🔥 ${AppStrings.num(ref, analytics.streakDays)} দিন'
-                                    : '🔥 ${analytics.streakDays}d',
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: analytics.streakDays > 0
-                                      ? Colors.orange.shade800
-                                      : Colors.grey,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          analytics.practicedToday
-                              ? AppStrings.t(
-                                  ref,
-                                  '✅ আজকের স্ট্রিক সুরক্ষিত! ধারাবাহিকতা বজায় রাখুন।',
-                                  '✅ Today\'s streak is protected! Keep it going.',
-                                )
-                              : (analytics.streakDays > 0
-                                  ? AppStrings.t(
-                                      ref,
-                                      '⏳ আজ এখনো অনুশীলন হয়নি — মিস করলে স্ট্রিক ০ হয়ে যাবে!',
-                                      '⏳ Practice today or your streak resets to 0!',
-                                    )
-                                  : AppStrings.t(
-                                      ref,
-                                      '🚀 আজ অনুশীলন করে নতুন ধারাবাহিক স্ট্রিক শুরু করুন!',
-                                      '🚀 Practice today to start a new daily streak!',
-                                    )),
-                          style: GoogleFonts.hindSiliguri(
-                            fontSize: 11.5,
-                            color: analytics.streakDays > 0 &&
-                                    !analytics.practicedToday
-                                ? Colors.amber.shade800
-                                : (isDark
-                                    ? AppColors.textSecondaryDark
-                                    : AppColors.textSecondaryLight),
                           ),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              Text(
+                                AppStrings.t(ref, 'দৈনিক চ্যালেঞ্জ', 'Daily Challenge'),
+                                style: GoogleFonts.hindSiliguri(
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withValues(alpha: 0.14),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  isBn
+                                      ? '🔥 ${AppStrings.num(ref, analytics.streakDays)} দিন স্ট্রিক'
+                                      : '🔥 ${analytics.streakDays}d Streak',
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.orange.shade800,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            analytics.practicedToday
+                                ? AppStrings.t(
+                                    ref,
+                                    '✅ আজকের চ্যালেঞ্জ সম্পন্ন! স্ট্রিক সুরক্ষিত।',
+                                    '✅ Today\'s challenge done! Streak secured.',
+                                  )
+                                : AppStrings.t(
+                                    ref,
+                                    '⚡ ৫টি বিষয়ভিত্তিক প্রশ্ন • স্ট্রিক বাড়াতে চ্যালেঞ্জ নিন!',
+                                    '⚡ 5 multi-subject questions • Take the daily challenge!',
+                                  ),
+                            style: GoogleFonts.hindSiliguri(
+                              fontSize: 11.5,
+                              color: analytics.practicedToday
+                                  ? AppColors.success
+                                  : (isDark
+                                      ? AppColors.textSecondaryDark
+                                      : AppColors.textSecondaryLight),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange.shade700,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        visualDensity: VisualDensity.compact,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      visualDensity: VisualDensity.compact,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      onPressed: () => context.push('/daily'),
+                      child: Text(
+                        analytics.practicedToday
+                            ? AppStrings.t(ref, 'ফলাফল', 'Review')
+                            : AppStrings.t(ref, 'চ্যালেঞ্জ', 'Play'),
+                        style: GoogleFonts.hindSiliguri(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                    onPressed: () => context.go('/practice'),
-                    child: Text(
-                      AppStrings.t(ref, 'অনুশীলন', 'Practice'),
-                      style: GoogleFonts.hindSiliguri(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 

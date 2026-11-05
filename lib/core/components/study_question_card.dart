@@ -312,18 +312,74 @@ class _StudyQuestionCardState extends State<StudyQuestionCard> {
                       ),
                     ],
 
+                    // Difficulty Badge
+                    if (q.difficulty.isNotEmpty) ...[
+                      Text('•',
+                          style: TextStyle(
+                              color: Colors.grey.withValues(alpha: 0.5),
+                              fontSize: 10)),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: q.difficulty == 'easy'
+                              ? const Color(0xFF059669).withValues(alpha: 0.12)
+                              : q.difficulty == 'hard'
+                                  ? const Color(0xFFE11D48).withValues(alpha: 0.12)
+                                  : const Color(0xFFD97706).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          q.difficulty == 'easy'
+                              ? (isBn ? 'সহজ' : 'Easy')
+                              : q.difficulty == 'hard'
+                                  ? (isBn ? 'কঠিন' : 'Hard')
+                                  : (isBn ? 'মাঝারি' : 'Medium'),
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                            color: q.difficulty == 'easy'
+                                ? const Color(0xFF059669)
+                                : q.difficulty == 'hard'
+                                    ? const Color(0xFFE11D48)
+                                    : const Color(0xFFD97706),
+                          ),
+                        ),
+                      ),
+                    ],
+
                     // Verified Badge
                     if (q.adminVerified) ...[
                       Text('•',
                           style: TextStyle(
                               color: Colors.grey.withValues(alpha: 0.5),
                               fontSize: 10)),
-                      Icon(
-                        LucideIcons.badgeCheck,
-                        size: 13,
-                        color: isDark
-                            ? const Color(0xFF34D399)
-                            : const Color(0xFF059669),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF059669).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              LucideIcons.shieldCheck,
+                              size: 11,
+                              color: Color(0xFF059669),
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              isBn ? 'ভেরিফাইড' : 'Verified',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF059669),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ],

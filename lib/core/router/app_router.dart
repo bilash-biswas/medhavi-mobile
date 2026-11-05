@@ -21,6 +21,7 @@ import 'package:medhavi_mobile/features/practice/presentation/screens/practice_s
 import 'package:medhavi_mobile/features/mistakes/presentation/screens/mistake_bank_screen.dart';
 import 'package:medhavi_mobile/features/bookmarks/presentation/screens/bookmarks_screen.dart';
 import 'package:medhavi_mobile/features/notifications/presentation/screens/notifications_screen.dart';
+import 'package:medhavi_mobile/features/daily_challenge/presentation/screens/daily_challenge_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -164,6 +165,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/notifications',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const NotificationsScreen(),
+      ),
+
+      // 11c. Daily Challenge Screen
+      GoRoute(
+        path: '/daily',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DailyChallengeScreen(),
       ),
 
       // 12. Main Application Shell (With persistent bottom nav bar)

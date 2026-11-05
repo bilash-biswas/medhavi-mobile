@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/components/auto_hide_app_bar.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/components/study_question_card.dart';
+import '../../../../core/constants/bcs_batch_counts.dart';
 import '../controllers/question_bank_controller.dart';
 
 // BCS Batches list sorted newest to oldest
@@ -98,6 +99,7 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
     if (state.selectedBatchTag.isNotEmpty) count++;
     if (state.selectedSubjectId.isNotEmpty) count++;
     if (state.selectedDifficulty != 'all') count++;
+    if (state.isBookmarkOnly) count++;
     if (state.searchQuery.isNotEmpty) count++;
     return count;
   }
@@ -371,77 +373,215 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
       ),
       builder: (ctx) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.75,
-          maxChildSize: 0.92,
-          minChildSize: 0.45,
-          builder: (_, controller) {
-            return Column(
-              children: [
-                const SizedBox(height: 12),
-                Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white24 : Colors.black12,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        isBn ? 'বিসিএস ব্যাচ নির্বাচন করুন' : 'Select BCS Batch',
-                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+        String selectedEra = 'all';
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final List<Map<String, String>> displayedBatches;
+            if (selectedEra == 'modern') {
+              displayedBatches = kBcsBatches.where((b) {
+                if (b['id']!.isEmpty) return true;
+                final m = RegExp(r'^(\d+)').firstMatch(b['id']!);
+                if (m != null) {
+                  final num = int.tryParse(m.group(1)!) ?? 0;
+                  return num >= 40 && num <= 50;
+                }
+                return false;
+              }).toList();
+            } else if (selectedEra == 'classic') {
+              displayedBatches = kBcsBatches.where((b) {
+                if (b['id']!.isEmpty) return true;
+                final m = RegExp(r'^(\d+)').firstMatch(b['id']!);
+                if (m != null) {
+                  final num = int.tryParse(m.group(1)!) ?? 0;
+                  return num >= 10 && num <= 39;
+                }
+                return false;
+              }).toList();
+            } else {
+              displayedBatches = kBcsBatches;
+            }
+
+            return DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.75,
+              maxChildSize: 0.92,
+              minChildSize: 0.45,
+              builder: (_, controller) {
+                return Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white24 : Colors.black12,
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                      IconButton(
-                        icon: const Icon(LucideIcons.x, size: 20),
-                        onPressed: () => Navigator.pop(ctx),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                Expanded(
-                  child: ListView.builder(
-                    controller: controller,
-                    itemCount: kBcsBatches.length,
-                    itemBuilder: (_, index) {
-                      final batch = kBcsBatches[index];
-                      final isSelected = batch['id'] == currentTag;
-                      final label = isBn
-                          ? (batch['labelBn'] ?? batch['label']!)
-                          : (batch['labelEn'] ?? batch['label']!);
-                      return ListTile(
-                        title: Text(
-                          label,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            color: isSelected
-                                ? AppColors.primary
-                                : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            isBn ? 'বিসিএস ব্যাচ নির্বাচন করুন' : 'Select BCS Batch',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
-                        ),
-                        trailing: isSelected
-                            ? const Icon(LucideIcons.check, color: AppColors.primary, size: 18)
-                            : null,
-                        onTap: () {
-                          ref.read(questionBankControllerProvider.notifier).setBatch(batch['id']!);
-                          Navigator.pop(ctx);
+                          IconButton(
+                            icon: const Icon(LucideIcons.x, size: 20),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Era Filter Segmented Tabs
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      child: Row(
+                        children: [
+                          _buildEraChip(
+                            label: isBn ? 'সব' : 'All',
+                            isSelected: selectedEra == 'all',
+                            onTap: () => setModalState(() => selectedEra = 'all'),
+                            isDark: isDark,
+                          ),
+                          const SizedBox(width: 8),
+                          _buildEraChip(
+                            label: isBn ? '৪০-৫০তম (নতুন)' : '40-50th (New)',
+                            isSelected: selectedEra == 'modern',
+                            onTap: () => setModalState(() => selectedEra = 'modern'),
+                            isDark: isDark,
+                          ),
+                          const SizedBox(width: 8),
+                          _buildEraChip(
+                            label: isBn ? '১০-৩৯তম (ক্লাসিক)' : '10-39th (Classic)',
+                            isSelected: selectedEra == 'classic',
+                            onTap: () => setModalState(() => selectedEra = 'classic'),
+                            isDark: isDark,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Divider(height: 1),
+
+                    Expanded(
+                      child: ListView.builder(
+                        controller: controller,
+                        itemCount: displayedBatches.length,
+                        itemBuilder: (_, index) {
+                          final batch = displayedBatches[index];
+                          final isSelected = batch['id'] == currentTag;
+                          final batchId = batch['id']!;
+                          final label = isBn
+                              ? (batch['labelBn'] ?? batch['label']!)
+                              : (batch['labelEn'] ?? batch['label']!);
+
+                          final int? verifiedCount = batchId.isNotEmpty ? kBcsBatchTotalCounts[batchId] : kBcsTotalQuestionCount;
+                          final String badgeText;
+                          final bool isUnderReview;
+                          if (batchId.isEmpty) {
+                            badgeText = '${AppStrings.num(ref, kBcsTotalQuestionCount)}টি প্রশ্ন';
+                            isUnderReview = false;
+                          } else if (verifiedCount != null) {
+                            badgeText = '${AppStrings.num(ref, verifiedCount)}টি প্রশ্ন';
+                            isUnderReview = false;
+                          } else {
+                            badgeText = isBn ? 'যাচাই প্রক্রিয়াধীন' : 'In Review';
+                            isUnderReview = true;
+                          }
+
+                          return ListTile(
+                            title: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    label,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      color: isSelected
+                                          ? AppColors.primary
+                                          : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: isUnderReview
+                                        ? Colors.amber.withValues(alpha: 0.12)
+                                        : AppColors.primary.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    badgeText,
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: isUnderReview ? Colors.amber.shade800 : AppColors.primary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            trailing: isSelected
+                                ? const Icon(LucideIcons.check, color: AppColors.primary, size: 18)
+                                : null,
+                            onTap: () {
+                              ref.read(questionBankControllerProvider.notifier).setBatch(batchId);
+                              Navigator.pop(ctx);
+                            },
+                          );
                         },
-                      );
-                    },
-                  ),
-                ),
-              ],
+                      ),
+                    ),
+                  ],
+                );
+              },
             );
           },
         );
       },
+    );
+  }
+
+  Widget _buildEraChip({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.primary
+                : (isDark ? Colors.white10 : const Color(0xFFF1F5F9)),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              color: isSelected
+                  ? Colors.white
+                  : (isDark ? Colors.white70 : Colors.black87),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -758,6 +898,65 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                   ),
                 ),
 
+                // Bookmark-Only Quick Toggle Chip
+                InkWell(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    notifier.toggleBookmarkOnly();
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: state.isBookmarkOnly
+                          ? Colors.amber.withValues(alpha: 0.16)
+                          : (isDark ? Colors.white10 : const Color(0xFFF1F5F9)),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: state.isBookmarkOnly ? Colors.amber : Colors.transparent,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          state.isBookmarkOnly ? LucideIcons.bookmarkCheck : LucideIcons.bookmark,
+                          size: 13,
+                          color: state.isBookmarkOnly ? Colors.amber.shade800 : Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          AppStrings.t(ref, 'বুকমার্ককৃত', 'Bookmarked'),
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: state.isBookmarkOnly ? FontWeight.bold : FontWeight.w500,
+                            color: state.isBookmarkOnly ? Colors.amber.shade800 : (isDark ? Colors.white70 : Colors.black87),
+                          ),
+                        ),
+                        if (state.bookmarkedIds.isNotEmpty) ...[
+                          const SizedBox(width: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: state.isBookmarkOnly ? Colors.amber.shade200 : Colors.grey.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              AppStrings.num(ref, state.bookmarkedIds.length),
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.bold,
+                                color: state.isBookmarkOnly ? Colors.amber.shade900 : Colors.grey,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+
                 // Reset Chip (only if filters are active)
                 if (activeFiltersCount > 0)
                   InkWell(
@@ -792,19 +991,26 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                   ),
 
                 // All Subjects Chip
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: FilterChip(
-                    selected: state.selectedSubjectId.isEmpty,
-                    label: Text(
-                      AppStrings.t(ref, 'সব বিষয়', 'All Subjects'),
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    onSelected: (_) => notifier.setSubject(''),
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    visualDensity: VisualDensity.compact,
-                  ),
+                Builder(
+                  builder: (_) {
+                    final allCount = state.selectedBatchTag.isNotEmpty
+                        ? (kBcsBatchTotalCounts[state.selectedBatchTag] ?? 0)
+                        : kBcsTotalQuestionCount;
+                    final allLabel = allCount > 0
+                        ? '${AppStrings.t(ref, 'সব বিষয়', 'All Subjects')} (${AppStrings.num(ref, allCount)})'
+                        : AppStrings.t(ref, 'সব বিষয়', 'All Subjects');
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: FilterChip(
+                        selected: state.selectedSubjectId.isEmpty,
+                        label: Text(allLabel, style: const TextStyle(fontSize: 12)),
+                        onSelected: (_) => notifier.setSubject(''),
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    );
+                  },
                 ),
 
                 // Horizontal Subject Pills
@@ -816,11 +1022,19 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                       : ((sub['nameEn'] as String?)?.isNotEmpty == true
                           ? sub['nameEn'] as String
                           : (sub['name'] as String? ?? ''));
+
+                  final subCount = state.selectedBatchTag.isNotEmpty
+                      ? (kBcsBatchSubjectCounts[state.selectedBatchTag]?[subId] ?? 0)
+                      : (kBcsGlobalSubjectCounts[subId] ?? 0);
+                  final subDisplay = subCount > 0
+                      ? '$subName (${AppStrings.num(ref, subCount)})'
+                      : subName;
+
                   return Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: FilterChip(
                       selected: isSelected,
-                      label: Text(subName, style: const TextStyle(fontSize: 12)),
+                      label: Text(subDisplay, style: const TextStyle(fontSize: 12)),
                       onSelected: (_) => notifier.setSubject(subId),
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
