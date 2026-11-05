@@ -81,7 +81,10 @@ class DailyChallengeRemoteDataSourceImpl
             try {
               final qDoc = await _firestore.collection('questions').doc(qId).get();
               if (qDoc.exists && qDoc.data() != null) {
-                fetched.add(QuestionEntity.fromFirestore(qDoc.id, qDoc.data()!));
+                final entity = QuestionEntity.fromFirestore(qDoc.id, qDoc.data()!);
+                if (entity.adminVerified) {
+                  fetched.add(entity);
+                }
               }
             } catch (_) {}
           }
@@ -115,10 +118,10 @@ class DailyChallengeRemoteDataSourceImpl
               .toList();
 
           final verified = docs.where((q) => q.adminVerified).toList();
-          final pool = verified.isNotEmpty ? verified : docs;
+          if (verified.isEmpty) continue;
 
-          final pickIndex = (seed + i * 13) % pool.length;
-          selectedQuestions.add(pool[pickIndex]);
+          final pickIndex = (seed + i * 13) % verified.length;
+          selectedQuestions.add(verified[pickIndex]);
         } catch (_) {}
       }
 
@@ -128,13 +131,15 @@ class DailyChallengeRemoteDataSourceImpl
           final fallbackSnap = await _firestore
               .collection('questions')
               .where('status', isEqualTo: 'published')
+              .where('adminVerified', isEqualTo: true)
               .limit(15)
               .get();
 
           final existingIds = selectedQuestions.map((q) => q.id).toSet();
           for (final d in fallbackSnap.docs) {
-            if (!existingIds.contains(d.id)) {
-              selectedQuestions.add(QuestionEntity.fromFirestore(d.id, d.data()));
+            final entity = QuestionEntity.fromFirestore(d.id, d.data());
+            if (!existingIds.contains(d.id) && entity.adminVerified) {
+              selectedQuestions.add(entity);
               if (selectedQuestions.length >= 5) break;
             }
           }

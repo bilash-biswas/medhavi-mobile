@@ -104,7 +104,9 @@ class MistakesController extends Notifier<MistakesState> {
         return;
       }
 
-      final questions = await _questionDataSource.getQuestionsByIds(mistakeIds);
+      final questions = (await _questionDataSource.getQuestionsByIds(mistakeIds))
+          .where((q) => q.adminVerified)
+          .toList();
 
       state = state.copyWith(
         questions: questions,

@@ -111,20 +111,25 @@ class DailyChallengeController extends Notifier<DailyChallengeState> {
       bool isDone = false;
       final uid = _userId;
       if (uid != null) {
-        isDone = await _dataSource.hasUserCompletedDailyToday(uid, dateStr);
+        try {
+          isDone = await _dataSource.hasUserCompletedDailyToday(uid, dateStr);
+        } catch (_) {}
       }
 
       final qs = await _dataSource.getTodayDailyQuestions(dateStr);
+      final verifiedOnly = qs.where((q) => q.adminVerified).toList();
 
       state = state.copyWith(
         isLoading: false,
-        questions: qs,
-        errorMessage: null,
+        questions: verifiedOnly,
+        errorMessage: verifiedOnly.isEmpty
+            ? 'আজকের দৈনিক চ্যালেঞ্জ লোড করা সম্ভব হয়নি। আবার চেষ্টা করুন।'
+            : null,
         alreadyCompletedToday: isDone,
         isCompleted: isDone,
       );
 
-      if (!isDone && qs.isNotEmpty) {
+      if (!isDone && verifiedOnly.isNotEmpty) {
         _startTimer();
       }
     } catch (err) {

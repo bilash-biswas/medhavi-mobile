@@ -226,6 +226,7 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
     final questions = contentDocs
         .map((docSnap) =>
             QuestionEntity.fromFirestore(docSnap.id, docSnap.data()))
+        .where((q) => q.adminVerified)
         .toList();
 
     return PaginatedQuestionsResult(

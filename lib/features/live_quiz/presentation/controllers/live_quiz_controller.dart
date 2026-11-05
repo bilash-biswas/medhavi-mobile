@@ -98,7 +98,10 @@ class LiveQuizController extends Notifier<LiveQuizState> {
 
   void startQuiz({List<QuestionEntity>? customQuestions, int durationSeconds = 300}) {
     _timer?.cancel();
-    final qList = customQuestions ?? _getSampleQuizQuestions();
+    final verified = customQuestions != null
+        ? customQuestions.where((q) => q.adminVerified).toList()
+        : _getSampleQuizQuestions();
+    final qList = verified.isNotEmpty ? verified : _getSampleQuizQuestions();
 
     state = LiveQuizState(
       questions: qList,
@@ -167,6 +170,7 @@ class LiveQuizController extends Notifier<LiveQuizState> {
         explanation: 'মহামহোপাধ্যায় হরপ্রসাদ শাস্ত্রী ১৯০৭ সালে নেপালের রাজদরবারের রয়েল লাইব্রেরি থেকে চর্যাপদের মূল পুঁথি আবিষ্কার করেন।',
         source: '46th-bcs',
         tags: ['46th-bcs', 'bangla'],
+        adminVerified: true,
       ),
       QuestionEntity(
         id: 'lq_2',
@@ -183,6 +187,7 @@ class LiveQuizController extends Notifier<LiveQuizState> {
         explanation: r'আমরা জানি, $a^2 + b^2 = (a+b)^2 - 2ab = (7)^2 - 2(10) = 49 - 20 = 29$',
         source: '45th-bcs',
         tags: ['45th-bcs', 'math'],
+        adminVerified: true,
       ),
       QuestionEntity(
         id: 'lq_3',
@@ -199,6 +204,7 @@ class LiveQuizController extends Notifier<LiveQuizState> {
         explanation: '"A Passage to India" is a famous novel by English author E. M. Forster published in 1924.',
         source: '44th-bcs',
         tags: ['44th-bcs', 'english'],
+        adminVerified: true,
       ),
       QuestionEntity(
         id: 'lq_4',
@@ -215,6 +221,7 @@ class LiveQuizController extends Notifier<LiveQuizState> {
         explanation: 'বাংলাদেশ সংবিধানের তৃতীয় ভাগে ২৭ থেকে ৪৪ নম্বর অনুচ্ছেদে নাগরিকদের ১৮টি মৌলিক অধিকারের নিশ্চয়তা প্রদান করা হয়েছে।',
         source: '46th-bcs',
         tags: ['46th-bcs', 'bangladesh'],
+        adminVerified: true,
       ),
       QuestionEntity(
         id: 'lq_5',
@@ -231,6 +238,7 @@ class LiveQuizController extends Notifier<LiveQuizState> {
         explanation: 'লাল আলোর তরঙ্গদৈর্ঘ্য সবচেয়ে বেশি হওয়ায় প্রিজমের মধ্য দিয়ে প্রতিসরণের সময় লাল আলোর বিচ্যুতি সবচেয়ে কম হয়।',
         source: '43rd-bcs',
         tags: ['43rd-bcs', 'science'],
+        adminVerified: true,
       ),
     ];
   }

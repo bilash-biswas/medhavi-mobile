@@ -97,7 +97,9 @@ class BookmarksController extends Notifier<BookmarksState> {
         return;
       }
 
-      final questions = await _questionDataSource.getQuestionsByIds(bookmarkIds.toList());
+      final questions = (await _questionDataSource.getQuestionsByIds(bookmarkIds.toList()))
+          .where((q) => q.adminVerified)
+          .toList();
 
       state = state.copyWith(
         questions: questions,

@@ -168,8 +168,11 @@ class PracticeSessionController extends Notifier<PracticeSessionState> {
     );
 
     if (preloadedQuestions != null && preloadedQuestions.isNotEmpty) {
-      _initSessionQuestions(preloadedQuestions, mode);
-      return;
+      final verifiedOnly = preloadedQuestions.where((q) => q.adminVerified).toList();
+      if (verifiedOnly.isNotEmpty) {
+        _initSessionQuestions(verifiedOnly, mode);
+        return;
+      }
     }
 
     try {
@@ -183,7 +186,7 @@ class PracticeSessionController extends Notifier<PracticeSessionState> {
         pageSize: fetchLimit,
       );
 
-      var fetched = List<QuestionEntity>.from(result.questions);
+      var fetched = List<QuestionEntity>.from(result.questions).where((q) => q.adminVerified).toList();
       if (fetched.isEmpty) {
         final fallback = await _questionDataSource.getQuestions(
           filters: QuestionFilterParams(
@@ -193,7 +196,7 @@ class PracticeSessionController extends Notifier<PracticeSessionState> {
           ),
           pageSize: fetchLimit,
         );
-        fetched = List<QuestionEntity>.from(fallback.questions);
+        fetched = List<QuestionEntity>.from(fallback.questions).where((q) => q.adminVerified).toList();
       }
 
       // Shuffle for dynamic practice variety
