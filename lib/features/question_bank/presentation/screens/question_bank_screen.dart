@@ -479,53 +479,17 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                               ? (batch['labelBn'] ?? batch['label']!)
                               : (batch['labelEn'] ?? batch['label']!);
 
-                          final int? verifiedCount = batchId.isNotEmpty ? qbState.batchCounts[batchId] : qbState.totalMatchingCount;
-                          final String badgeText;
-                          final bool isUnderReview;
-                          if (batchId.isEmpty) {
-                            badgeText = '${AppStrings.num(ref, qbState.totalMatchingCount)}টি প্রশ্ন';
-                            isUnderReview = false;
-                          } else if (verifiedCount != null && verifiedCount > 0) {
-                            badgeText = '${AppStrings.num(ref, verifiedCount)}টি প্রশ্ন';
-                            isUnderReview = false;
-                          } else {
-                            badgeText = isBn ? 'যাচাই প্রক্রিয়াধীন' : 'In Review';
-                            isUnderReview = true;
-                          }
-
                           return ListTile(
-                            title: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    label,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                      color: isSelected
-                                          ? AppColors.primary
-                                          : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: isUnderReview
-                                        ? Colors.amber.withValues(alpha: 0.12)
-                                        : AppColors.primary.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Text(
-                                    badgeText,
-                                    style: TextStyle(
-                                      fontSize: 10.5,
-                                      fontWeight: FontWeight.bold,
-                                      color: isUnderReview ? Colors.amber.shade800 : AppColors.primary,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            dense: true,
+                            title: Text(
+                              label,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
+                              ),
                             ),
                             trailing: isSelected
                                 ? const Icon(LucideIcons.check, color: AppColors.primary, size: 18)
