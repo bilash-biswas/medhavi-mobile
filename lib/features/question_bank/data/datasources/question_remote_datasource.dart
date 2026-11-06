@@ -40,7 +40,14 @@ abstract class QuestionRemoteDataSource {
   Future<List<QuestionEntity>> getQuestionsByIds(List<String> ids);
   Future<List<Map<String, dynamic>>> getSubjects({String examId = 'exam_bcs'});
   Future<int> getQuestionCount(QuestionFilterParams filters);
-  Future<Map<String, int>> getSubjectQuestionCounts({String examId = 'exam_bcs'});
+  Future<Map<String, int>> getSubjectQuestionCounts({
+    String examId = 'exam_bcs',
+    String? batchTag,
+  });
+  Future<Map<String, int>> getBatchQuestionCounts({
+    String examId = 'exam_bcs',
+    required List<String> batchTags,
+  });
 }
 
 class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
@@ -341,17 +348,20 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
   }
 
   @override
-  Future<Map<String, int>> getSubjectQuestionCounts(
-      {String examId = 'exam_bcs'}) async {
+  Future<Map<String, int>> getSubjectQuestionCounts({
+    String examId = 'exam_bcs',
+    String? batchTag,
+  }) async {
     final Map<String, int> counts = {};
     try {
       final subjects = await getSubjects(examId: examId);
       final futures = <Future<void>>[];
 
-      // Total across all subjects
+      // Total across all subjects (optionally filtered by batchTag)
       futures.add(() async {
-        final total =
-            await getQuestionCount(QuestionFilterParams(examId: examId));
+        final total = await getQuestionCount(
+          QuestionFilterParams(examId: examId, tag: batchTag),
+        );
         counts['all'] = total;
       }());
 
@@ -360,7 +370,11 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
         if (subId.isEmpty) continue;
         futures.add(() async {
           final c = await getQuestionCount(
-            QuestionFilterParams(examId: examId, subjectId: subId),
+            QuestionFilterParams(
+              examId: examId,
+              subjectId: subId,
+              tag: batchTag,
+            ),
           );
           counts[subId] = c;
         }());
@@ -369,6 +383,28 @@ class QuestionRemoteDataSourceImpl implements QuestionRemoteDataSource {
       await Future.wait(futures);
     } catch (e) {
       debugPrint('Notice: Error loading subject counts: $e');
+    }
+    return counts;
+  }
+
+  @override
+  Future<Map<String, int>> getBatchQuestionCounts({
+    String examId = 'exam_bcs',
+    required List<String> batchTags,
+  }) async {
+    final Map<String, int> counts = {};
+    try {
+      final futures = batchTags.map((tag) async {
+        final c = await getQuestionCount(
+          QuestionFilterParams(examId: examId, tag: tag),
+        );
+        if (c > 0) {
+          counts[tag] = c;
+        }
+      });
+      await Future.wait(futures);
+    } catch (e) {
+      debugPrint('Notice: Error loading batch counts: $e');
     }
     return counts;
   }

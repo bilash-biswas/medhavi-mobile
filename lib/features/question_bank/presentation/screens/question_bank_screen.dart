@@ -6,7 +6,6 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/components/auto_hide_app_bar.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/components/study_question_card.dart';
-import '../../../../core/constants/bcs_batch_counts.dart';
 import '../controllers/question_bank_controller.dart';
 
 // BCS Batches list sorted newest to oldest
@@ -373,6 +372,7 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
       ),
       builder: (ctx) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
+        final qbState = ref.read(questionBankControllerProvider);
         String selectedEra = 'all';
 
         return StatefulBuilder(
@@ -479,13 +479,13 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                               ? (batch['labelBn'] ?? batch['label']!)
                               : (batch['labelEn'] ?? batch['label']!);
 
-                          final int? verifiedCount = batchId.isNotEmpty ? kBcsBatchTotalCounts[batchId] : kBcsTotalQuestionCount;
+                          final int? verifiedCount = batchId.isNotEmpty ? qbState.batchCounts[batchId] : qbState.totalMatchingCount;
                           final String badgeText;
                           final bool isUnderReview;
                           if (batchId.isEmpty) {
-                            badgeText = '${AppStrings.num(ref, kBcsTotalQuestionCount)}টি প্রশ্ন';
+                            badgeText = '${AppStrings.num(ref, qbState.totalMatchingCount)}টি প্রশ্ন';
                             isUnderReview = false;
-                          } else if (verifiedCount != null) {
+                          } else if (verifiedCount != null && verifiedCount > 0) {
                             badgeText = '${AppStrings.num(ref, verifiedCount)}টি প্রশ্ন';
                             isUnderReview = false;
                           } else {
@@ -994,8 +994,8 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                 Builder(
                   builder: (_) {
                     final allCount = state.selectedBatchTag.isNotEmpty
-                        ? (kBcsBatchTotalCounts[state.selectedBatchTag] ?? 0)
-                        : kBcsTotalQuestionCount;
+                        ? (state.batchCounts[state.selectedBatchTag] ?? 0)
+                        : (state.subjectCounts['all'] ?? state.totalMatchingCount);
                     final allLabel = allCount > 0
                         ? '${AppStrings.t(ref, 'সব বিষয়', 'All Subjects')} (${AppStrings.num(ref, allCount)})'
                         : AppStrings.t(ref, 'সব বিষয়', 'All Subjects');
@@ -1023,9 +1023,7 @@ class _QuestionBankScreenState extends ConsumerState<QuestionBankScreen> {
                           ? sub['nameEn'] as String
                           : (sub['name'] as String? ?? ''));
 
-                  final subCount = state.selectedBatchTag.isNotEmpty
-                      ? (kBcsBatchSubjectCounts[state.selectedBatchTag]?[subId] ?? 0)
-                      : (kBcsGlobalSubjectCounts[subId] ?? 0);
+                  final subCount = state.subjectCounts[subId] ?? 0;
                   final subDisplay = subCount > 0
                       ? '$subName (${AppStrings.num(ref, subCount)})'
                       : subName;

@@ -30,6 +30,7 @@ class QuestionBankState {
   final String selectedBatchEra;
   final List<Map<String, dynamic>> subjects;
   final Map<String, int> subjectCounts;
+  final Map<String, int> batchCounts;
   final int totalMatchingCount;
   final Set<String> bookmarkedIds;
   final Map<String, String> userAnswers;
@@ -51,6 +52,7 @@ class QuestionBankState {
     this.selectedBatchEra = 'all',
     this.subjects = const [],
     this.subjectCounts = const {},
+    this.batchCounts = const {},
     this.totalMatchingCount = 0,
     this.bookmarkedIds = const {},
     this.userAnswers = const {},
@@ -73,6 +75,7 @@ class QuestionBankState {
     String? selectedBatchEra,
     List<Map<String, dynamic>>? subjects,
     Map<String, int>? subjectCounts,
+    Map<String, int>? batchCounts,
     int? totalMatchingCount,
     Set<String>? bookmarkedIds,
     Map<String, String>? userAnswers,
@@ -94,6 +97,7 @@ class QuestionBankState {
       selectedBatchEra: selectedBatchEra ?? this.selectedBatchEra,
       subjects: subjects ?? this.subjects,
       subjectCounts: subjectCounts ?? this.subjectCounts,
+      batchCounts: batchCounts ?? this.batchCounts,
       totalMatchingCount: totalMatchingCount ?? this.totalMatchingCount,
       bookmarkedIds: bookmarkedIds ?? this.bookmarkedIds,
       userAnswers: userAnswers ?? this.userAnswers,
@@ -134,10 +138,27 @@ class QuestionBankController extends Notifier<QuestionBankState> {
   Future<void> init() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      // 1. Fetch BCS subjects & counts in parallel
+      // 1. Fetch BCS subjects, batch counts & subject counts in parallel from Firestore
       final subjectsFuture = _dataSource.getSubjects(examId: state.selectedExamId);
-      final countsFuture =
-          _dataSource.getSubjectQuestionCounts(examId: state.selectedExamId);
+      final countsFuture = _dataSource.getSubjectQuestionCounts(
+        examId: state.selectedExamId,
+        batchTag: state.selectedBatchTag.isNotEmpty ? state.selectedBatchTag : null,
+      );
+      final batchTags = [
+        '50th-bcs', '49th-bcs', '48th-bcs', '47th-bcs', '46th-bcs',
+        '45th-bcs', '44th-bcs', '43rd-bcs', '42nd-bcs', '41st-bcs',
+        '40th-bcs', '39th-bcs', '38th-bcs', '37th-bcs', '36th-bcs',
+        '35th-bcs', '34th-bcs', '33rd-bcs', '32nd-bcs', '31st-bcs',
+        '30th-bcs', '29th-bcs', '28th-bcs', '27th-bcs', '26th-bcs',
+        '25th-bcs', '24th-bcs', '23rd-bcs', '22nd-bcs', '21st-bcs',
+        '20th-bcs', '19th-bcs', '18th-bcs', '17th-bcs', '16th-bcs',
+        '15th-bcs', '14th-bcs', '13th-bcs', '12th-bcs', '11th-bcs',
+        '10th-bcs',
+      ];
+      final batchCountsFuture = _dataSource.getBatchQuestionCounts(
+        examId: state.selectedExamId,
+        batchTags: batchTags,
+      );
 
       // 2. Fetch bookmarks and recorded answers if user is logged in
       final user = ref.read(currentUserProvider);
@@ -151,10 +172,12 @@ class QuestionBankController extends Notifier<QuestionBankState> {
 
       final subjects = await subjectsFuture;
       final subjectCounts = await countsFuture;
+      final batchCounts = await batchCountsFuture;
 
       state = state.copyWith(
         subjects: subjects,
         subjectCounts: subjectCounts,
+        batchCounts: batchCounts,
         totalMatchingCount: subjectCounts['all'] ?? 0,
         bookmarkedIds: bookmarks,
         userAnswers: answers,
@@ -247,6 +270,15 @@ class QuestionBankController extends Notifier<QuestionBankState> {
   void setBatch(String batchTag) {
     if (state.selectedBatchTag == batchTag) return;
     state = state.copyWith(selectedBatchTag: batchTag);
+    // Dynamically reload subject counts for this batch from Firestore
+    _dataSource
+        .getSubjectQuestionCounts(
+          examId: state.selectedExamId,
+          batchTag: batchTag.isNotEmpty ? batchTag : null,
+        )
+        .then((counts) {
+      state = state.copyWith(subjectCounts: counts);
+    });
     loadInitialQuestions();
   }
 
@@ -273,6 +305,11 @@ class QuestionBankController extends Notifier<QuestionBankState> {
       isBookmarkOnly: false,
       selectedBatchEra: 'all',
     );
+    _dataSource
+        .getSubjectQuestionCounts(examId: state.selectedExamId)
+        .then((counts) {
+      state = state.copyWith(subjectCounts: counts);
+    });
     loadInitialQuestions();
   }
 
