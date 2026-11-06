@@ -1,21 +1,21 @@
 library;
 
 /// Canonical BCS Question Bank Statistics & Counts Matrix (Verified Questions Only)
-/// Exactly 1320 admin-verified questions across authentic BCS preliminary batches.
+/// Exactly 1132 admin-verified questions across authentic BCS preliminary batches.
 
-const int kBcsTotalQuestionCount = 1320;
+const int kBcsTotalQuestionCount = 1132;
 
 const Map<String, int> kBcsGlobalSubjectCounts = {
-  'sub_bcs_english': 250,
-  'sub_bcs_ict': 16,
-  'sub_bcs_bangla': 255,
-  'sub_bcs_math': 188,
-  'sub_bcs_bd_affairs': 231,
-  'sub_bcs_intl_affairs': 220,
-  'sub_bcs_geography': 12,
-  'sub_bcs_science': 107,
-  'sub_bcs_mental_ability': 19,
-  'sub_bcs_ethics': 22,
+  'sub_bcs_english': 222,
+  'sub_bcs_ict': 3,
+  'sub_bcs_bangla': 227,
+  'sub_bcs_math': 160,
+  'sub_bcs_bd_affairs': 207,
+  'sub_bcs_intl_affairs': 201,
+  'sub_bcs_geography': 4,
+  'sub_bcs_science': 88,
+  'sub_bcs_mental_ability': 6,
+  'sub_bcs_ethics': 14,
 };
 
 const Map<String, int> kBcsBatchTotalCounts = {
@@ -34,7 +34,7 @@ const Map<String, int> kBcsBatchTotalCounts = {
   '47th-bcs': 83,
   '48th-bcs': 87,
   '49th-bcs': 100,
-  '50th-bcs': 195,
+  '50th-bcs': 7,
 };
 
 const Map<String, Map<String, int>> kBcsBatchSubjectCounts = {
@@ -147,15 +147,6 @@ const Map<String, Map<String, int>> kBcsBatchSubjectCounts = {
     'sub_bcs_mental_ability': 2,
   },
   '50th-bcs': {
-    'sub_bcs_bangla': 28,
-    'sub_bcs_science': 19,
-    'sub_bcs_bd_affairs': 24,
-    'sub_bcs_english': 28,
-    'sub_bcs_math': 28,
-    'sub_bcs_ict': 13,
-    'sub_bcs_mental_ability': 13,
-    'sub_bcs_intl_affairs': 19,
-    'sub_bcs_geography': 8,
-    'sub_bcs_ethics': 15,
+    'sub_bcs_ethics': 7,
   },
 };
